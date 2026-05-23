@@ -601,7 +601,6 @@ export function TestCycleComparisonPage() {
                   <h3 className="text-lg font-semibold text-slate-800">Comparison metrics</h3>
                   <p className="text-sm text-slate-600">Choose up to 5 metrics for the chat analysis.</p>
                 </div>
-                <p className="text-sm text-slate-500">Select 1 to 5 metrics</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -611,7 +610,6 @@ export function TestCycleComparisonPage() {
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
                           <h4 className="font-semibold text-slate-800">{categoryName}</h4>
-                          <p className="mt-1 text-sm text-slate-600">Select metrics from {categoryName}.</p>
                         </div>
                       </div>
 
@@ -644,9 +642,9 @@ export function TestCycleComparisonPage() {
                                     <div className="text-xs text-slate-500">{metric.description}</div>
                                   </div>
                                 </div>
-                                <span className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                  {isSelected ? 'Selected' : 'Click to select'}
-                                </span>
+                                {isSelected ? (
+                                  <span className="mt-1 rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white">Selected</span>
+                                ) : null}
                               </div>
                             </button>
                           );

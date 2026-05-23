@@ -356,61 +356,7 @@ export function ApplicationDashboard() {
           )}
         </div>
 
-        {/* Testing Environment Info - Bottom Wide Card */}
-        <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <Clock className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-lg font-semibold text-slate-700">Testing Environment Info</h3>
-          </div>
-
-          <div className="grid grid-cols-4 gap-6">
-            {/* Uptime */}
-            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-5 border border-slate-200 shadow-sm">
-              <p className="text-sm text-slate-600 mb-2 font-medium">Uptime</p>
-              <p className="text-3xl font-bold text-slate-800">127d 14h</p>
-              <p className="text-xs text-slate-500 mt-2">Since last restart</p>
-            </div>
-
-            {/* CPU Health */}
-            <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-5 border-2 border-emerald-200 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-slate-700 font-medium">CPU Health</p>
-                <Cpu className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                <p className="text-2xl font-bold text-emerald-600">Safe</p>
-              </div>
-              <p className="text-xs text-slate-600 font-medium">Usage: 34%</p>
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-100">
-                <div className="h-full w-[34%] bg-gradient-to-r from-emerald-400 to-emerald-600" />
-              </div>
-            </div>
-
-            {/* Storage Health */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border-2 border-amber-200 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-slate-700 font-medium">Storage Health</p>
-                <HardDrive className="w-5 h-5 text-amber-600" />
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" />
-                <p className="text-2xl font-bold text-amber-600">Risk</p>
-              </div>
-              <p className="text-xs text-slate-600 font-medium">Usage: 87%</p>
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-amber-100">
-                <div className="h-full w-[87%] bg-gradient-to-r from-amber-400 to-orange-600" />
-              </div>
-            </div>
-
-            {/* Memory */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200 shadow-sm">
-              <p className="text-sm text-slate-700 mb-2 font-medium">Memory</p>
-              <p className="text-3xl font-bold text-blue-600">62%</p>
-              <p className="text-xs text-slate-600 mt-2 font-medium">12.4 GB / 20 GB</p>
-            </div>
-          </div>
-        </div>
+        {/* Testing Environment Info card removed per request */}
       </div>
 
       {/* Floating Chatbot Icon */}
