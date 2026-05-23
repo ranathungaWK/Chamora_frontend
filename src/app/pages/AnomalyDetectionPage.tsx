@@ -274,6 +274,16 @@ export function AnomalyDetectionPage() {
     }
   };
 
+  const handleEditConfigClick = (summary: ConfigSummary) => {
+    // select the endpoint so the config panel loads for this endpoint
+    setSelectedEndpointId(summary.endpoint_id);
+    // scroll to the configuration section after state updates (allow brief delay)
+    setTimeout(() => {
+      const el = document.getElementById('rule-config-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Navigation Bar */}
@@ -308,7 +318,7 @@ export function AnomalyDetectionPage() {
       {/* Main Content */}
       <div className="p-6 max-w-7xl mx-auto">
         {/* Rule-Based Configuration Section */}
-        <div className="mb-6 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-6 shadow-sm">
+        <div id="rule-config-section" className="mb-6 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold text-slate-700 mb-1">Rule-Based System Configuration</h2>
@@ -510,23 +520,19 @@ export function AnomalyDetectionPage() {
                     <p className="text-3xl font-bold text-indigo-700">{summary.anomaly_count}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-lg bg-white px-2 py-1.5 border border-slate-200">
-                      <span className="text-slate-500">Latency</span>
-                      <p className="font-semibold text-slate-800">{summary.latency_threshold}</p>
-                    </div>
-                    <div className="rounded-lg bg-white px-2 py-1.5 border border-slate-200">
-                      <span className="text-slate-500">Error Rate</span>
-                      <p className="font-semibold text-slate-800">{summary.error_rate_threshold}</p>
-                    </div>
-                    <div className="rounded-lg bg-white px-2 py-1.5 border border-slate-200">
-                      <span className="text-slate-500">CPU</span>
-                      <p className="font-semibold text-slate-800">{summary.cpu_usage_threshold}</p>
-                    </div>
-                    <div className="rounded-lg bg-white px-2 py-1.5 border border-slate-200">
-                      <span className="text-slate-500">Memory</span>
-                      <p className="font-semibold text-slate-800">{summary.memory_pressure_threshold}</p>
-                    </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Link
+                      to={`/anomaly-flags/${appId}/${summary.config_id}`}
+                      className="inline-flex items-center h-10 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                    >
+                      View Flags
+                    </Link>
+                      <button
+                        onClick={() => handleEditConfigClick(summary)}
+                        className="inline-flex items-center h-10 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        Edit Config
+                      </button>
                   </div>
                 </div>
               ))}
