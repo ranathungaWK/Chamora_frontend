@@ -1,7 +1,7 @@
 import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { buildApiUrl } from '@/app/api';
+import { buildApiUrl } from '../api';
 
 interface EndpointResponse {
   id: number;

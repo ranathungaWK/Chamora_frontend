@@ -1,6 +1,6 @@
 import { Activity, ArrowLeft, Play, Square, CheckCircle2, Loader2, AlertCircle, FileCode } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 type TestStatus = 'idle' | 'running' | 'completed' | 'failed';
 

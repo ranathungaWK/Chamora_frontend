@@ -1,6 +1,6 @@
 import { Activity, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildApiUrl } from '../api';
 
 function getErrorMessage(detail: unknown, fallback: string) {

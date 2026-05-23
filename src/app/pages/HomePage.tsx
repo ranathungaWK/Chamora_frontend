@@ -1,5 +1,5 @@
 import { Activity, ArrowRight, CheckCircle2, Shield, Zap, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 export function HomePage() {
   return (

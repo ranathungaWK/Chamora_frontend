@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RouterProvider } from 'react-router';
+import { RouterProvider } from 'react-router-dom';
 import { ThemeToggle } from './components/ThemeToggle';
 import { router } from './routes';
 
@@ -28,7 +28,7 @@ export default function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      {/*<ThemeToggle theme={theme} onToggle={toggleTheme} />*/}
     </>
   );
 }

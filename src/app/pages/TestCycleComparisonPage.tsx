@@ -1,5 +1,5 @@
 import { Activity, ArrowLeft, BarChart3, TrendingUp, TrendingDown, CheckCircle2, XCircle } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 export function TestCycleComparisonPage() {
   const { appId } = useParams();

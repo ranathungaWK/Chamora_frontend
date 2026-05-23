@@ -1,7 +1,7 @@
 import { Activity, ArrowLeft, ArrowRight, Check, Plus, Trash2, Upload, FileText, Server, TestTube, FolderOpen, SkipForward, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { buildApiUrl } from '@/app/api';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { buildApiUrl } from '../api';
 
 interface OnboardingPageProps {
   onBackToDashboard?: () => void;
