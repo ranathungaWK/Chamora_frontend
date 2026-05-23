@@ -1,6 +1,22 @@
 import { Activity, Send } from 'lucide-react';
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
+
+interface ComparisonChatState {
+  applicationName: string;
+  selectedCycles: Array<{
+    id: number;
+    name: string;
+    date: string;
+    status: string;
+  }>;
+  selectedMetrics: Array<{
+    key: string;
+    label: string;
+    description?: string;
+  }>;
+  mode: 'test_comparison';
+}
 
 interface ChatbotPageProps {
   onBackToDashboard?: () => void;
@@ -8,33 +24,52 @@ interface ChatbotPageProps {
 
 export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
   const { appId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const comparisonContext = location.state as ComparisonChatState | undefined;
+  const comparisonMode = comparisonContext?.mode === 'test_comparison';
+  const initialMessages = comparisonMode
+    ? [
+        {
+          type: 'bot',
+          content: 'Comparison context loaded',
+          details: `Ready to analyze ${comparisonContext.selectedCycles.length} selected test runs for ${comparisonContext.applicationName}. Pick a question below or type your own follow-up.`,
+        },
+      ]
+    : [
+        {
+          type: 'bot',
+          content: 'Welcome to Chamora',
+          details: 'I\'m your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more.'
+        }
+      ];
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      type: 'bot',
-      content: 'Welcome to Chamora',
-      details: 'I\'m your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more.'
-    }
-  ]);
+  const [messages, setMessages] = useState(initialMessages);
 
-  const suggestedQuestions = [
-    'How do I improve test coverage?',
-    'What are the most critical test failures?',
-    'Common Module Performance Data',
-    'How to identify memory leaks and regular memory footprints?',
-    'Optimize API response times across different environments',
-    'Implement load/stress testing techniques',
-    'Streamlined Error Handling: how to improve handling and error logging for better debugging',
-    'Improve database query efficiency and indexing strategies',
-    'Implement monitoring, alerting, and observability for real-time issue detection',
-    'Implement caching strategies to reduce database load and improve response times',
-    'Implement security testing techniques including vulnerability scanning and penetration testing',
-    'Use Pytest fixtures and mock objects to improve HTTP requests',
-    'Implement load balancing to distribute traffic evenly and improve responsiveness',
-    'Optimize front-end performance through minification, bundling, and lazy loading',
-    'Memory usage and garbage collection frequency'
-  ];
+  const suggestedQuestions = comparisonMode
+    ? [
+        'Which selected cycle regressed the most?',
+        'Summarize the biggest performance differences across the chosen metrics.',
+        'What should I inspect first in these comparison results?',
+        'Turn this comparison into an executive summary.'
+      ]
+    : [
+        'How do I improve test coverage?',
+        'What are the most critical test failures?',
+        'Common Module Performance Data',
+        'How to identify memory leaks and regular memory footprints?',
+        'Optimize API response times across different environments',
+        'Implement load/stress testing techniques',
+        'Streamlined Error Handling: how to improve handling and error logging for better debugging',
+        'Improve database query efficiency and indexing strategies',
+        'Implement monitoring, alerting, and observability for real-time issue detection',
+        'Implement caching strategies to reduce database load and improve response times',
+        'Implement security testing techniques including vulnerability scanning and penetration testing',
+        'Use Pytest fixtures and mock objects to improve HTTP requests',
+        'Implement load balancing to distribute traffic evenly and improve responsiveness',
+        'Optimize front-end performance through minification, bundling, and lazy loading',
+        'Memory usage and garbage collection frequency'
+      ];
 
   const handleSend = () => {
     if (message.trim()) {
@@ -98,6 +133,45 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
       {/* Main Chat Content */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full max-w-7xl mx-auto p-6">
+          {comparisonMode && comparisonContext && (
+            <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-5 py-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-indigo-600 font-semibold">Comparison context</p>
+                  <h2 className="mt-1 text-lg font-bold text-slate-800">{comparisonContext.applicationName}</h2>
+                  <p className="text-sm text-slate-600">The selected cycles and metrics are loaded into this chat session.</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-indigo-700 border border-indigo-200">
+                  <Activity className="w-4 h-4" />
+                  Comparison ready
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Cycles</p>
+                  <div className="mt-2 space-y-2">
+                    {comparisonContext.selectedCycles.map((cycle) => (
+                      <div key={cycle.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                        {cycle.name} · {cycle.date} · {cycle.status}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Metrics</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {comparisonContext.selectedMetrics.map((metric) => (
+                      <span key={metric.key} className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        {metric.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="h-full bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col">
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6">
