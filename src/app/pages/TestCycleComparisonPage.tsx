@@ -47,6 +47,21 @@ export function TestCycleComparisonPage() {
   const [scopeSelections, setScopeSelections] = useState<Record<number, { endpointId: string; containerName: string }>>({});
   const [lastScopePromptSignature, setLastScopePromptSignature] = useState('');
 
+  const defaultThresholdValues: Record<string, string> = {
+    avgResponseTime: '300',
+    p95Latency: '400',
+    p99Latency: '500',
+    throughput: '1000',
+    errorRate: '1',
+    successRate: '99',
+    cpuUsage: '80',
+    memoryUsage: '85',
+    activeThreads: '20',
+    networkWait: '50',
+    requestQueue: '10',
+    failureCount: '5',
+  };
+
   const testRuns: TestRun[] = [
     {
       id: 1,
@@ -265,7 +280,7 @@ export function TestCycleComparisonPage() {
   const selectedRun = selectedRuns[0];
   const isThresholdMode = selectedRuns.length === 1;
   const canOpenChat = selectedRuns.length >= 2 && selectedRuns.length <= 4 && selectedMetrics.length > 0 && selectedMetrics.length <= 5;
-  const needsScopeConfiguration = selectedRuns.length > 0 && (
+  const needsScopeConfiguration = selectedRuns.length > 1 && (
     selectedMetricKeys.some((key) => blackboxMetricKeys.includes(key)) ||
     selectedMetricKeys.some((key) => cadvisorMetricKeys.includes(key))
   );
@@ -281,6 +296,26 @@ export function TestCycleComparisonPage() {
     const containerOk = !selectedMetricKeys.some((key) => cadvisorMetricKeys.includes(key)) || Boolean(scope?.containerName);
     return endpointOk && containerOk;
   });
+
+  useEffect(() => {
+    if (!isThresholdMode || selectedMetricKeys.length === 0) {
+      return;
+    }
+
+    setThresholdValues((current) => {
+      const next = { ...current };
+      let didChange = false;
+
+      selectedMetricKeys.forEach((metricKey) => {
+        if (!next[metricKey] && defaultThresholdValues[metricKey]) {
+          next[metricKey] = defaultThresholdValues[metricKey];
+          didChange = true;
+        }
+      });
+
+      return didChange ? next : current;
+    });
+  }, [defaultThresholdValues, isThresholdMode, selectedMetricKeys]);
 
   const thresholdResults = useMemo(() => {
     if (!isThresholdMode || !selectedRun) {
@@ -317,10 +352,15 @@ export function TestCycleComparisonPage() {
       .filter((item): item is NonNullable<typeof item> => item !== null);
   }, [isThresholdMode, selectedMetrics, selectedRun, thresholdValues]);
 
-  const canRunThresholdCheck = isThresholdMode && selectedMetrics.length > 0 && thresholdResults.length === selectedMetrics.length;
+  const canRunThresholdCheck = isThresholdMode && selectedMetrics.length > 0;
 
   useEffect(() => {
     if (selectedRuns.length <= 1) {
+      setScopeModalOpen(false);
+      return;
+    }
+
+    if (!needsScopeConfiguration) {
       setScopeModalOpen(false);
       return;
     }
@@ -391,8 +431,8 @@ export function TestCycleComparisonPage() {
   };
 
   const handleThresholdCheck = () => {
-    if (!canRunThresholdCheck || !scopeIsComplete) {
-      setSelectionError('Select exactly 1 cycle, at least 1 metric, configure the scope popup, and enter threshold values for the selected metrics.');
+    if (!canRunThresholdCheck) {
+      setSelectionError('Select exactly 1 cycle and at least 1 metric before comparing against thresholds.');
       return;
     }
 
@@ -580,20 +620,35 @@ export function TestCycleComparisonPage() {
                           const isSelected = selectedMetricKeys.includes(metric.key);
                           const MetricIcon = metric.icon;
                           return (
-                            <div key={metric.key} className={`flex items-center justify-between p-2 rounded-lg ${isSelected ? 'bg-slate-50' : ''}`}>
-                              <div className="flex items-center gap-3">
-                                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                  <MetricIcon className="w-4 h-4" />
+                            <button
+                              key={metric.key}
+                              type="button"
+                              onClick={() => toggleMetric(metric.key)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault();
+                                  toggleMetric(metric.key);
+                                }
+                              }}
+                              className={`w-full rounded-xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
+                                isSelected ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                  <div className={`flex h-9 w-9 items-center justify-center rounded-md ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    <MetricIcon className="w-4 h-4" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-slate-800">{metric.label}</div>
+                                    <div className="text-xs text-slate-500">{metric.description}</div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div className="font-medium text-slate-800">{metric.label}</div>
-                                  <div className="text-xs text-slate-500">{metric.description}</div>
-                                </div>
+                                <span className={`mt-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                  {isSelected ? 'Selected' : 'Click to select'}
+                                </span>
                               </div>
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <Checkbox checked={isSelected} onCheckedChange={() => toggleMetric(metric.key)} aria-label={`Select ${metric.label}`} />
-                              </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
