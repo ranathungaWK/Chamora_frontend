@@ -348,9 +348,9 @@ export function AnomalyFlagsPage() {
               {visibleAnomalies.map((a) => (
                 <div key={a.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                       <ShieldAlert className={`w-4 h-4 ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`} />
-                      <p className="font-semibold text-slate-800">{a.root_cause ?? 'Root cause not available'}</p>
+                      <p className="font-semibold text-slate-800">{a.root_cause ? 'Identified by rule based detection' : 'Identified by machine learning model'}</p>
                     </div>
                     <p className="text-sm text-slate-500">Severity: <span className={`font-semibold ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`}>{a.severity}</span></p>
                     <p className="text-xs text-slate-400">Window time: {new Date(a.window_timestamp).toLocaleString()}</p>
@@ -363,7 +363,7 @@ export function AnomalyFlagsPage() {
 
                   <div className="flex items-center gap-2 md:justify-end">
                     <button
-                      onClick={() => alert(a.root_cause ?? 'No root cause available')}
+                      onClick={() => alert(a.root_cause ? 'Identified by rule based detection' : 'Identified by machine learning model')}
                       className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <CheckCircle2 className="w-4 h-4" />
