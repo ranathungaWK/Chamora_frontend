@@ -1,6 +1,6 @@
 import { Activity, ArrowLeft, ArrowRight, Check, Plus, Trash2, Upload, FileText, Server, TestTube, FolderOpen, SkipForward, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { buildApiUrl } from '@/app/api';
 
 interface OnboardingPageProps {
@@ -49,6 +49,7 @@ interface Phase3Data {
 export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
   const { appId, phase } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3>(1);
   const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -83,6 +84,16 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
     victoriaMetricsEndpoint: '',
     blackboxTargets: [{ id: '1', targetName: '', containerName: '' }]
   });
+
+  useEffect(() => {
+    const repoFromHomePage = searchParams.get('github_repo');
+    if (repoFromHomePage) {
+      setPhase1Data((prev) => ({
+        ...prev,
+        githubRepo: repoFromHomePage,
+      }));
+    }
+  }, [searchParams]);
 
   // Phase 2 State
   const [phase2Data, setPhase2Data] = useState<Phase2Data>({

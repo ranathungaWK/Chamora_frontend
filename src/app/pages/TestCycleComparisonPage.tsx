@@ -440,7 +440,7 @@ export function TestCycleComparisonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="flex justify-between items-center">
@@ -463,9 +463,9 @@ export function TestCycleComparisonPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <BarChart3 className="w-4 h-4 text-indigo-600" />
-            <span className="text-indigo-700 font-medium">{testRuns.length} Test Runs</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg">
+            <BarChart3 className="w-4 h-4 text-slate-600" />
+            <span className="text-slate-700 font-medium">{testRuns.length} Test Runs</span>
           </div>
         </div>
       </nav>
@@ -480,7 +480,7 @@ export function TestCycleComparisonPage() {
                 <h2 className="text-2xl font-bold text-slate-800 mt-2">Select cycles and metrics for chat-based comparison</h2>
                 <p className="text-sm text-slate-600 mt-2">Pick up to 4 test runs from this application, then choose up to 5 metrics to compare before opening the chat window.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-indigo-700">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
                 <MessageCircle className="w-5 h-5" />
                 <span className="text-sm font-semibold">Chat handoff ready</span>
               </div>
@@ -493,21 +493,21 @@ export function TestCycleComparisonPage() {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Test runs</p>
                 <p className="mt-2 text-2xl font-bold text-slate-800">{testRuns.length}</p>
               </div>
-              <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-indigo-600">Selected cycles</p>
-                <p className="mt-2 text-2xl font-bold text-indigo-700">{selectedRuns.length}/4</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-600">Selected cycles</p>
+                <p className="mt-2 text-2xl font-bold text-slate-700">{selectedRuns.length}/4</p>
               </div>
-              <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-purple-600">Selected metrics</p>
-                <p className="mt-2 text-2xl font-bold text-purple-700">{selectedMetrics.length}/5</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-600">Selected metrics</p>
+                <p className="mt-2 text-2xl font-bold text-slate-700">{selectedMetrics.length}/5</p>
               </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-emerald-600">Ready to compare</p>
-                <p className="mt-2 text-2xl font-bold text-emerald-700">{canOpenChat ? 'Yes' : 'No'}</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-600">Ready to compare</p>
+                <p className="mt-2 text-2xl font-bold text-slate-700">{canOpenChat ? 'Yes' : 'No'}</p>
               </div>
             </div>
 
@@ -606,7 +606,7 @@ export function TestCycleComparisonPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {Object.entries(metricsByCategory).map(([categoryName, metrics]) => {
                   return (
-                    <div key={categoryName} className="rounded-2xl border p-4 transition-all bg-white">
+                    <div key={categoryName} className="rounded-2xl border border-slate-200 p-4 transition-all bg-white">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
                           <h4 className="font-semibold text-slate-800">{categoryName}</h4>
@@ -729,7 +729,7 @@ export function TestCycleComparisonPage() {
                 )}
 
                 {isThresholdMode && selectedRun && (
-                  <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
                     <div>
                       <p className="text-sm font-semibold text-slate-800">Threshold inputs</p>
                       <p className="mt-1 text-sm text-slate-600">Enter the threshold for each selected metric. The selected cycle will be compared against these values.</p>

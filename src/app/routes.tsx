@@ -9,6 +9,7 @@ import { TestCycleComparisonPage } from "./pages/TestCycleComparisonPage";
 import { AutomatedTestingPage } from "./pages/AutomatedTestingPage";
 import { OnboardingPage } from "./components/OnboardingPage";
 import { ChatbotPage } from "./components/ChatbotPage";
+import { SetupTestingEnvironmentPage } from "./pages/SetupTestingEnvironmentPage";
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/setup-testing-environment",
+    element: <SetupTestingEnvironmentPage />,
   },
   {
     path: "/dashboard",
