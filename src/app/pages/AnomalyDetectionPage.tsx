@@ -1,7 +1,43 @@
-import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
 import { buildApiUrl } from '@/app/api';
+
+const ML_TRAINING_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000;
+
+function formatRemainingTime(durationMs: number): string {
+  const safeDuration = Math.max(0, durationMs);
+  const totalMinutes = Math.ceil(safeDuration / 60000);
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+function getMlTrainingCooldown(createdAt: string, nowMs: number) {
+  const createdAtMs = new Date(createdAt).getTime();
+  if (Number.isNaN(createdAtMs)) {
+    return { isReady: true, remainingMs: 0 };
+  }
+
+  const elapsedMs = nowMs - createdAtMs;
+  const remainingMs = ML_TRAINING_COOLDOWN_MS - elapsedMs;
+  return {
+    isReady: remainingMs <= 0,
+    remainingMs: Math.max(0, remainingMs),
+  };
+}
+
+function formatMetricScore(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(3) : '-';
+}
 
 interface EndpointResponse {
   id: number;
@@ -40,8 +76,22 @@ interface ConfigSummary {
   disk_io_threshold: number;
   cpu_node_ratio_threshold: number;
   is_active: boolean;
+  ml_inference_need: boolean;
   created_at: string;
   anomaly_count: number;
+}
+
+interface ModelMetric {
+  id: string;
+  config_id: number;
+  model_version: string;
+  recall_score: number;
+  precision_score: number;
+  accuracy_score: number;
+  f1_score: number;
+  evaluation_type: string;
+  is_promoted: boolean;
+  created_at: string;
 }
 
 const DEFAULT_RULE_CONFIG: RuleConfig = {
@@ -68,9 +118,23 @@ export function AnomalyDetectionPage() {
   const [configMessage, setConfigMessage] = useState('');
   const [configMessageType, setConfigMessageType] = useState<'info' | 'success' | 'error'>('info');
   const [configSummaries, setConfigSummaries] = useState<ConfigSummary[]>([]);
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  const [isModelsModalOpen, setIsModelsModalOpen] = useState(false);
+  const [selectedConfigForModels, setSelectedConfigForModels] = useState<ConfigSummary | null>(null);
+  const [selectedConfigModels, setSelectedConfigModels] = useState<ModelMetric[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState('');
 
   // Rule-based configuration fields (aligned with anomaly_config_registration schemas)
   const [ruleConfig, setRuleConfig] = useState<RuleConfig>(DEFAULT_RULE_CONFIG);
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, 60000);
+
+    return () => window.clearInterval(timerId);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -282,6 +346,42 @@ export function AnomalyDetectionPage() {
       const el = document.getElementById('rule-config-section');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
+  };
+
+  const handleViewModelsClick = async (summary: ConfigSummary) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setModelsError('Please log in to view model metrics.');
+      setIsModelsModalOpen(true);
+      setSelectedConfigForModels(summary);
+      setSelectedConfigModels([]);
+      return;
+    }
+
+    setSelectedConfigForModels(summary);
+    setIsModelsModalOpen(true);
+    setIsLoadingModels(true);
+    setModelsError('');
+    setSelectedConfigModels([]);
+
+    try {
+      const response = await fetch(buildApiUrl(`/api/v1/anomaly-configs/${summary.config_id}/models`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load model metrics');
+      }
+
+      const models = (await response.json()) as ModelMetric[];
+      setSelectedConfigModels(models);
+    } catch (error) {
+      setModelsError(error instanceof Error ? error.message : 'Failed to load model metrics');
+    } finally {
+      setIsLoadingModels(false);
+    }
   };
 
   return (
@@ -496,9 +596,18 @@ export function AnomalyDetectionPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {configSummaries.map((summary) => (
+                (() => {
+                  const cooldown = getMlTrainingCooldown(summary.created_at, currentTimeMs);
+                  const trainingButtonLabel = summary.ml_inference_need
+                    ? 'Disable ML Training'
+                    : cooldown.isReady
+                      ? 'Start ML Training'
+                      : `Starts in ${formatRemainingTime(cooldown.remainingMs)}`;
+
+                  return (
                 <div
                   key={summary.config_id}
-                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/60 p-5 shadow-sm transition-all hover:shadow-md"
+                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/60 p-6 min-h-[220px] flex flex-col justify-between shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
@@ -515,31 +624,172 @@ export function AnomalyDetectionPage() {
                     </span>
                   </div>
 
-                  <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-3">
+                  <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-4">
                     <p className="text-xs text-indigo-700 font-medium">Anomalies found for this configuration</p>
                     <p className="text-3xl font-bold text-indigo-700">{summary.anomaly_count}</p>
                   </div>
 
-                  <div className="mt-4 flex justify-end gap-2">
+                  <div className="mb-4 rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-medium">ML Training Window</p>
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                      <span className="text-sm text-slate-700 font-medium">
+                        {cooldown.isReady
+                          ? 'Ready to start ML training'
+                          : `Available in ${formatRemainingTime(cooldown.remainingMs)}`}
+                      </span>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          cooldown.isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {cooldown.isReady ? 'Ready' : 'Not enough data'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleViewModelsClick(summary)}
+                      className="mt-3 inline-flex items-center justify-center h-10 px-4 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm"
+                    >
+                      View Available Models
+                    </button>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end gap-3 flex-wrap">
+                    <button
+                      onClick={async () => {
+                        if (!summary.ml_inference_need && !cooldown.isReady) {
+                          return;
+                        }
+                        const token = localStorage.getItem('access_token');
+                        if (!token) return;
+                        try {
+                          const res = await fetch(buildApiUrl(`/api/v1/anomaly-configs/${summary.config_id}/ml-need/toggle`), {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (!res.ok) throw new Error('Failed to toggle ML need');
+                          const updated = await res.json();
+                          // update local state
+                          setConfigSummaries((prev) => prev.map((s) => (s.config_id === updated.id ? { ...s, ml_inference_need: updated.ml_inference_need } : s)));
+                        } catch (err) {
+                          // eslint-disable-next-line no-console
+                          console.error(err);
+                        }
+                      }}
+                      // keep sizing consistent with other action buttons
+                      disabled={!summary.ml_inference_need && !cooldown.isReady}
+                      className={`inline-flex items-center justify-center h-11 px-4 rounded-lg text-sm font-medium transition min-w-[170px] ${
+                        summary.ml_inference_need
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-600 shadow-sm'
+                          : cooldown.isReady
+                            ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
+                            : 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {trainingButtonLabel}
+                    </button>
+
                     <Link
                       to={`/anomaly-flags/${appId}/${summary.config_id}`}
-                      className="inline-flex items-center h-10 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+                      className="inline-flex items-center justify-center h-11 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition min-w-[120px]"
                     >
                       View Flags
                     </Link>
-                      <button
-                        onClick={() => handleEditConfigClick(summary)}
-                        className="inline-flex items-center h-10 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-                      >
-                        Edit Config
-                      </button>
+
+                    <button
+                      onClick={() => handleEditConfigClick(summary)}
+                      className="inline-flex items-center justify-center h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition min-w-[120px] shadow-sm"
+                    >
+                      Edit Config
+                    </button>
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {isModelsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8">
+          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Available Models</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-900">
+                  {selectedConfigForModels?.endpoint_name ?? 'Selected configuration'}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Model metrics loaded from the MLModelMetric table for this configuration.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModelsModalOpen(false);
+                  setSelectedConfigForModels(null);
+                  setSelectedConfigModels([]);
+                  setModelsError('');
+                }}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                aria-label="Close model details"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-auto p-6">
+              {isLoadingModels ? (
+                <p className="text-sm text-slate-600">Loading model metrics...</p>
+              ) : modelsError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {modelsError}
+                </div>
+              ) : selectedConfigModels.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+                  <p className="font-semibold text-slate-800">No model metrics found</p>
+                  <p className="mt-1 text-sm text-slate-500">Train or promote a model for this config to see its metrics here.</p>
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="grid grid-cols-[1.1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] gap-0 bg-slate-900 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white">
+                    <div>Model</div>
+                    <div>F1</div>
+                    <div>Accuracy</div>
+                    <div>Recall</div>
+                    <div>Precision</div>
+                    <div>Evaluated Type</div>
+                    <div>Created</div>
+                  </div>
+                  <div className="divide-y divide-slate-200 bg-white">
+                    {selectedConfigModels.map((model) => (
+                      <div
+                        key={model.id}
+                        className={`grid grid-cols-[1.1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] gap-0 px-4 py-4 text-sm ${
+                          model.is_promoted ? 'bg-emerald-50/70' : ''
+                        }`}
+                      >
+                        <div>
+                          <p className="font-semibold text-slate-900">{model.model_version}</p>
+                          <p className="text-xs text-slate-500">{model.is_promoted ? 'Promoted model' : 'Historical model'}</p>
+                        </div>
+                        <div className="font-medium text-slate-700">{formatMetricScore(model.f1_score)}</div>
+                        <div className="font-medium text-slate-700">{formatMetricScore(model.accuracy_score)}</div>
+                        <div className="font-medium text-slate-700">{formatMetricScore(model.recall_score)}</div>
+                        <div className="font-medium text-slate-700">{formatMetricScore(model.precision_score)}</div>
+                        <div className="text-slate-700">{model.evaluation_type}</div>
+                        <div className="text-slate-700">{new Date(model.created_at).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
