@@ -6,6 +6,7 @@ import { ApplicationDashboard } from "./pages/ApplicationDashboard";
 import { AnomalyDetectionPage } from "./pages/AnomalyDetectionPage";
 import { AnomalyFlagsPage } from "./pages/AnomalyFlagsPage";
 import { TestCycleComparisonPage } from "./pages/TestCycleComparisonPage";
+import { ComparisonResultsPage } from "./pages/ComparisonResultsPage";
 import { AutomatedTestingPage } from "./pages/AutomatedTestingPage";
 import { OnboardingPage } from "./components/OnboardingPage";
 import { ChatbotPage } from "./components/ChatbotPage";
@@ -43,6 +44,10 @@ export const router = createBrowserRouter([
   {
     path: "/test-cycle-comparison/:appId",
     element: <TestCycleComparisonPage />,
+  },
+  {
+    path: "/comparison-results/:appId",
+    element: <ComparisonResultsPage />,
   },
   {
     path: "/automated-testing/:appId",

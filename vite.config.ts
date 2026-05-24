@@ -19,6 +19,7 @@ function figmaAssetResolver() {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://localhost:8000'
+  const compareServiceTarget = env.VITE_COMPARE_SERVICE_URL || 'http://localhost:8020'
 
   return {
     plugins: [
@@ -43,6 +44,11 @@ export default defineConfig(({ mode }) => {
         '/retriever': {
           target: proxyTarget,
           changeOrigin: true,
+        },
+        '/compare-service': {
+          target: compareServiceTarget,
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(/^\/compare-service/, ''),
         },
       },
     },
