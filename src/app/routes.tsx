@@ -5,6 +5,7 @@ import { UserDashboard } from "./pages/UserDashboard";
 import { ApplicationDashboard } from "./pages/ApplicationDashboard";
 import { AnomalyDetectionPage } from "./pages/AnomalyDetectionPage";
 import { AnomalyFlagsPage } from "./pages/AnomalyFlagsPage";
+import { RootCauseAnalysisPage } from "./pages/RootCauseAnalysisPage";
 import { TestCycleComparisonPage } from "./pages/TestCycleComparisonPage";
 import { AutomatedTestingPage } from "./pages/AutomatedTestingPage";
 import { OnboardingPage } from "./components/OnboardingPage";
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
   {
     path: "/anomaly-detection/:appId",
     element: <AnomalyDetectionPage />,
+  },
+  {
+    path: "/anomaly-flags/:appId/:configId/:anomalyId/root-cause",
+    element: <RootCauseAnalysisPage />,
   },
   {
     path: "/anomaly-flags/:appId/:configId",

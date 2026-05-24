@@ -1,7 +1,7 @@
-import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2, X } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
-import { buildApiUrl } from '@/app/api';
+import { buildApiUrl, buildRcaApiUrl } from '@/app/api';
 
 interface AnomalyItem {
   id: string;
@@ -24,6 +24,24 @@ interface FlagCounts {
   total: number;
   CRITICAL: number;
   WARNING: number;
+}
+
+interface RootCauseAnalysisResult {
+  id: string;
+  application_id: number;
+  config_id: number;
+  window_timestamp: string;
+  ml_severity: string;
+  ml_root_cause: string;
+  root_cause: string;
+  confidence: number;
+  affected_component: string;
+  evidence: string;
+  reasoning: string;
+  recommended_actions: string[];
+  anomalies_detected: string[];
+  analysis_source: string;
+  created_at: string;
 }
 
 const oneDayMs = 24 * 60 * 60 * 1000;
@@ -98,6 +116,10 @@ export function AnomalyFlagsPage() {
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [mutating, setMutating] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState('');
+  const [analysisResult, setAnalysisResult] = useState<RootCauseAnalysisResult | null>(null);
+  const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyItem | null>(null);
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('window_timestamp');
   const [order, setOrder] = useState('desc');
@@ -177,6 +199,59 @@ export function AnomalyFlagsPage() {
     } finally {
       setMutating(false);
     }
+  };
+
+  const runRootCauseAnalysis = async (anomaly: AnomalyItem) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setAnalysisError('Please log in to run root cause analysis.');
+      return;
+    }
+
+    setSelectedAnomaly(anomaly);
+    setAnalysisLoading(true);
+    setAnalysisError('');
+    setAnalysisResult(null);
+
+    try {
+      const response = await fetch(buildRcaApiUrl('/api/v1/analyze'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          record: {
+            id: anomaly.id,
+            application_id: anomaly.application_id,
+            config_id: anomaly.config_id,
+            window_timestamp: anomaly.window_timestamp,
+            anomaly_score: anomaly.score,
+            severity: anomaly.severity,
+            root_cause: anomaly.root_cause ?? undefined,
+            evidence: anomaly.evidence,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to run root cause analysis');
+      }
+
+      const payload = (await response.json()) as RootCauseAnalysisResult;
+      setAnalysisResult(payload);
+    } catch (e) {
+      setAnalysisError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  const closeAnalysisPanel = () => {
+    setSelectedAnomaly(null);
+    setAnalysisResult(null);
+    setAnalysisError('');
+    setAnalysisLoading(false);
   };
 
   const acknowledgeAll = async () => {
@@ -362,13 +437,13 @@ export function AnomalyFlagsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 md:justify-end">
-                    <button
-                      onClick={() => alert(a.root_cause ? 'Identified by rule based detection' : 'Identified by machine learning model')}
+                    <Link
+                      to={`/anomaly-flags/${appId}/${configId}/${a.id}/root-cause`}
                       className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       Root Cause
-                    </button>
+                    </Link>
                     <button
                       onClick={() => void acknowledgeOne(a.id)}
                       disabled={mutating}
@@ -384,6 +459,164 @@ export function AnomalyFlagsPage() {
           )}
         </div>
       </div>
+
+      {selectedAnomaly && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8">
+          <div className="w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Root Cause Analysis</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-900">Anomaly {selectedAnomaly.id}</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  The full anomaly record is sent to the RCA engine as the analysis payload.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeAnalysisPanel}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                aria-label="Close root cause analysis panel"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid gap-0 md:grid-cols-2">
+              <div className="border-b border-slate-200 p-6 md:border-b-0 md:border-r">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Full anomaly record</p>
+                    <h4 className="mt-1 text-base font-semibold text-slate-900">Source payload</h4>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedAnomaly.severity === 'CRITICAL' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {selectedAnomaly.severity}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Application</p>
+                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.application_id}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Config</p>
+                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.config_id}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Window time</p>
+                    <p className="mt-1 font-medium text-slate-800">{new Date(selectedAnomaly.window_timestamp).toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Score</p>
+                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.score}</p>
+                  </div>
+                </div>
+
+                <details className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4" open>
+                  <summary className="cursor-pointer text-sm font-medium text-slate-700">Complete payload JSON</summary>
+                  <pre className="mt-3 max-h-[26rem] overflow-auto text-xs leading-5 text-slate-700">
+                    {JSON.stringify(
+                      {
+                        id: selectedAnomaly.id,
+                        application_id: selectedAnomaly.application_id,
+                        config_id: selectedAnomaly.config_id,
+                        window_timestamp: selectedAnomaly.window_timestamp,
+                        score: selectedAnomaly.score,
+                        severity: selectedAnomaly.severity,
+                        root_cause: selectedAnomaly.root_cause,
+                        evidence: selectedAnomaly.evidence,
+                        created_at: selectedAnomaly.created_at,
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                </details>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">RCA engine response</p>
+                    <h4 className="mt-1 text-base font-semibold text-slate-900">Analysis output</h4>
+                  </div>
+                </div>
+
+                {analysisLoading ? (
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Running root cause analysis...</div>
+                ) : analysisError ? (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{analysisError}</div>
+                ) : analysisResult ? (
+                  <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Root cause</p>
+                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.root_cause}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Confidence</p>
+                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.confidence}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Affected component</p>
+                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.affected_component}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Analysis source</p>
+                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.analysis_source}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reasoning</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">{analysisResult.reasoning}</p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Recommended actions</p>
+                      <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                        {analysisResult.recommended_actions.map((action) => (
+                          <li key={action} className="rounded-lg bg-slate-50 px-3 py-2">
+                            {action}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <details className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <summary className="cursor-pointer text-sm font-medium text-slate-700">Raw RCA JSON</summary>
+                      <pre className="mt-3 max-h-[18rem] overflow-auto text-xs leading-5 text-slate-700">{JSON.stringify(analysisResult, null, 2)}</pre>
+                    </details>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+                    Click Root Cause again to run the RCA engine with the complete anomaly record.
+                  </div>
+                )}
+
+                <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void runRootCauseAnalysis(selectedAnomaly)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-slate-400"
+                    disabled={analysisLoading}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Run RCA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeAnalysisPanel}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
