@@ -1,7 +1,7 @@
 import { Activity, ArrowLeft, ArrowRight, Check, Plus, Trash2, Upload, FileText, Server, TestTube, FolderOpen, SkipForward, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { buildApiUrl } from '../api';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
+import { buildApiUrl } from '@/app/api';
 
 interface OnboardingPageProps {
   onBackToDashboard?: () => void;
@@ -49,6 +49,7 @@ interface Phase3Data {
 export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
   const { appId, phase } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3>(1);
   const [completedPhases, setCompletedPhases] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
@@ -83,6 +84,16 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
     victoriaMetricsEndpoint: '',
     blackboxTargets: [{ id: '1', targetName: '', containerName: '' }]
   });
+
+  useEffect(() => {
+    const repoFromHomePage = searchParams.get('github_repo');
+    if (repoFromHomePage) {
+      setPhase1Data((prev) => ({
+        ...prev,
+        githubRepo: repoFromHomePage,
+      }));
+    }
+  }, [searchParams]);
 
   // Phase 2 State
   const [phase2Data, setPhase2Data] = useState<Phase2Data>({
@@ -712,7 +723,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-800">Test Cycles Configuration</h2>
-                <p className="text-sm text-slate-600">Upload JMeter test scripts and provide test cycle details</p>
+                <p className="text-sm text-slate-600">Upload k6 test scripts and provide test cycle details</p>
               </div>
             </div>
 
@@ -773,12 +784,12 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
               {/* File Upload */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Upload Test Script File (JMeter) <span className="text-red-500">*</span>
+                  Upload Test Script File (k6) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type="file"
-                    accept=".jmx,.xml"
+                    accept=".js,.mjs"
                     onChange={handleScriptFileUpload}
                     className="hidden"
                     id="script-upload"
@@ -792,7 +803,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                       <p className="font-semibold text-slate-700">
                         {phase2Data.scriptFileName || 'Click to upload or drag and drop'}
                       </p>
-                      <p className="text-sm text-slate-500 mt-1">JMX or XML files only</p>
+                      <p className="text-sm text-slate-500 mt-1">JS files only (k6 scripts)</p>
                     </div>
                   </label>
                 </div>

@@ -1,11 +1,22 @@
-import { Activity, Send, MessageSquare, Plus, Clock } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  sendChatMessage,
-  getChatSessions,
-  getChatMessages
-} from '../api/chatbotApi';
+import { Activity, Send } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router';
+
+interface ComparisonChatState {
+  applicationName: string;
+  selectedCycles: Array<{
+    id: number;
+    name: string;
+    date: string;
+    status: string;
+  }>;
+  selectedMetrics: Array<{
+    key: string;
+    label: string;
+    description?: string;
+  }>;
+  mode: 'test_comparison';
+}
 
 interface ChatbotPageProps {
   onBackToDashboard?: () => void;
@@ -13,79 +24,66 @@ interface ChatbotPageProps {
 
 export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
   const { appId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const comparisonContext = location.state as ComparisonChatState | undefined;
+  const comparisonMode = comparisonContext?.mode === 'test_comparison';
+  const initialMessages = comparisonMode
+    ? [
+        {
+          type: 'bot',
+          content: 'Comparison context loaded',
+          details: `Ready to analyze ${comparisonContext.selectedCycles.length} selected test runs for ${comparisonContext.applicationName}. Pick a question below or type your own follow-up.`,
+        },
+      ]
+    : [
+        {
+          type: 'bot',
+          content: 'Welcome to Chamora',
+          details: 'I\'m your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more.'
+        }
+      ];
   const [message, setMessage] = useState('');
-  const [activeSessionId, setActiveSessionId] = useState(1);
+  const [messages, setMessages] = useState(initialMessages);
 
-  // Chat history sessions
- const [chatSessions, setChatSessions] = useState<any[]>([]);
+  const suggestedQuestions = comparisonMode
+    ? [
+        'Which selected cycle regressed the most?',
+        'Summarize the biggest performance differences across the chosen metrics.',
+        'What should I inspect first in these comparison results?',
+        'Turn this comparison into an executive summary.'
+      ]
+    : [
+        'How do I improve test coverage?',
+        'What are the most critical test failures?',
+        'Common Module Performance Data',
+        'How to identify memory leaks and regular memory footprints?',
+        'Optimize API response times across different environments',
+        'Implement load/stress testing techniques',
+        'Streamlined Error Handling: how to improve handling and error logging for better debugging',
+        'Improve database query efficiency and indexing strategies',
+        'Implement monitoring, alerting, and observability for real-time issue detection',
+        'Implement caching strategies to reduce database load and improve response times',
+        'Implement security testing techniques including vulnerability scanning and penetration testing',
+        'Use Pytest fixtures and mock objects to improve HTTP requests',
+        'Implement load balancing to distribute traffic evenly and improve responsiveness',
+        'Optimize front-end performance through minification, bundling, and lazy loading',
+        'Memory usage and garbage collection frequency'
+      ];
 
-type ChatMessage = { type: 'bot' | 'user'; content: string; details?: string };
-const [messages, setMessages] = useState<ChatMessage[]>([
-  {
-    type: 'bot',
-    content: 'Welcome to Chamora',
-    details:
-      "I'm your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more."
-  }
-]);
-
-const loadSessions = async () => {
-  try {
-    const response = await getChatSessions(appId || "1");
-    setChatSessions(response.sessions || []);
-  } catch (error) {
-    console.error("Failed to load chat sessions", error);
-  }
-};
-
-useEffect(() => {
-  if (!appId) return;
-    loadSessions();
-}, [appId]);
-
-const handleSend = async () => {
-  if (!message.trim()) return;
-
-  const userMessage = message;
-
-  setMessages(prev => [
-    ...prev,
-    {
-      type: 'user',
-      content: userMessage
+  const handleSend = () => {
+    if (message.trim()) {
+      setMessages([...messages, { type: 'user', content: message }]);
+      setMessage('');
+      // Simulate bot response
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          type: 'bot',
+          content: 'I\'m processing your request. This is a demo response to show the chat functionality.'
+        }]);
+      }, 1000);
     }
-  ]);
-
-  setMessage('');
-
-  try {
-    const response = await sendChatMessage(
-      appId || '1',
-      userMessage
-    );
-
-    setMessages(prev => [
-      ...prev,
-      {
-        type: 'bot',
-        content: response.answer
-      }
-    ]);
-
-    loadSessions();
-  } catch (error) {
-    console.error(error);
-
-    setMessages(prev => [
-      ...prev,
-      {
-        type: 'bot',
-        content: 'Failed to connect to AI backend.'
-      }
-    ]);
-  }
-};
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -133,67 +131,54 @@ const handleSend = async () => {
       </nav>
 
       {/* Main Chat Content */}
-      <div className="flex-1 overflow-hidden flex">
-        {/* Left Sidebar - Chat History */}
-        <div className="w-80 bg-white border-r border-slate-200 flex flex-col">
-          {/* New Chat Button */}
-          <div className="p-4 border-b border-slate-200">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg transition-all shadow-md hover:shadow-lg font-semibold">
-              <Plus className="w-5 h-5" />
-              New Chat
-            </button>
-          </div>
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full max-w-7xl mx-auto p-6">
+          {comparisonMode && comparisonContext && (
+            <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-5 py-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-indigo-600 font-semibold">Comparison context</p>
+                  <h2 className="mt-1 text-lg font-bold text-slate-800">{comparisonContext.applicationName}</h2>
+                  <p className="text-sm text-slate-600">The selected cycles and metrics are loaded into this chat session.</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-indigo-700 border border-indigo-200">
+                  <Activity className="w-4 h-4" />
+                  Comparison ready
+                </div>
+              </div>
 
-          {/* Chat History List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">
-              Chat History
-            </h3>
-            <div className="space-y-2">
-              {chatSessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => setActiveSessionId(session.id)}
-                  className={`w-full text-left p-3 rounded-lg transition-all ${
-                    activeSessionId === session.id
-                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300 shadow-sm'
-                      : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className={`w-4 h-4 mt-1 flex-shrink-0 ${
-                      activeSessionId === session.id ? 'text-indigo-600' : 'text-slate-400'
-                    }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold text-sm truncate ${
-                        activeSessionId === session.id ? 'text-indigo-700' : 'text-slate-800'
-                      }`}>
-                        {session.title}
-                      </p>
-                      <p className="text-xs text-slate-500 truncate mt-1">
-                        {session.preview}
-                      </p>
-                      <div className="flex items-center gap-1 mt-2">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        <span className="text-xs text-slate-500">{session.timestamp}</span>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Cycles</p>
+                  <div className="mt-2 space-y-2">
+                    {comparisonContext.selectedCycles.map((cycle) => (
+                      <div key={cycle.id} className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                        {cycle.name} · {cycle.date} · {cycle.status}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </button>
-              ))}
+                </div>
+                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Metrics</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {comparisonContext.selectedMetrics.map((metric) => (
+                      <span key={metric.key} className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        {metric.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Main Chat Area */}
-        <div className="flex-1 h-full">
-          <div className="h-full bg-white/80 backdrop-blur-sm overflow-hidden flex flex-col">
+          <div className="h-full bg-white/80 backdrop-blur-sm border-2 border-slate-200 rounded-2xl shadow-xl overflow-hidden flex flex-col">
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-8">
-              <div className="max-w-6xl mx-auto space-y-6">
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="max-w-5xl mx-auto space-y-6">
                 {messages.map((msg, index) => (
                   <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-4xl ${
+                    <div className={`max-w-3xl ${
                       msg.type === 'user'
                         ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-5 shadow-md'
                         : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-sm'
@@ -210,12 +195,44 @@ const handleSend = async () => {
                     </div>
                   </div>
                 ))}
+
+                {/* Suggested Questions */}
+                {messages.length <= 1 && (
+                  <div className="mt-8">
+                    <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-lg">
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold">?</span>
+                        </div>
+                        <h3 className="font-bold text-lg text-slate-800">Popular Questions</h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        {suggestedQuestions.slice(0, 8).map((question, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setMessage(question)}
+                            className="group text-left bg-white hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 border-2 border-slate-200 hover:border-indigo-300 px-5 py-4 rounded-xl transition-all shadow-sm hover:shadow-md"
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-sm group-hover:scale-110 transition-transform">
+                                {index + 1}
+                              </span>
+                              <span className="text-slate-700 group-hover:text-indigo-700 font-medium">
+                                {question}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Input Area */}
-            <div className="border-t-2 border-slate-200 p-8 bg-gradient-to-r from-slate-50 to-blue-50">
-              <div className="max-w-6xl mx-auto">
+            <div className="border-t-2 border-slate-200 p-6 bg-gradient-to-r from-slate-50 to-blue-50">
+              <div className="max-w-5xl mx-auto">
                 <div className="flex gap-4 items-end">
                   <div className="flex-1 relative">
                     <textarea
