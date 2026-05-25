@@ -1,6 +1,6 @@
 import { Activity, Mail, Lock, ArrowRight, Copy, Github, CheckCircle2, Shield, Server, TestTube } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildApiUrl } from '../api';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Testing-Environment-';

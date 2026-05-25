@@ -1,7 +1,7 @@
 import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
-import { buildApiUrl } from '@/app/api';
+import { buildApiUrl } from '../api';
 
 const ML_TRAINING_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000;
 

@@ -1,7 +1,7 @@
 import { Activity, AlertTriangle, Cpu, HardDrive, MessageCircle, Clock, Server, ArrowLeft, TrendingUp, BarChart3, ChevronRight, FolderOpen, FileText, Trash2, Loader2, AlertCircle, Upload } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { buildApiUrl } from '@/app/api';
+import { buildApiUrl } from '../api';
 
 interface AnomalyConfig {
   id: number;

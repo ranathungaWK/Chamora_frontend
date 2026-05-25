@@ -1,7 +1,7 @@
 import { Activity, LogOut, Plus, Server, TestTube, FolderOpen, TrendingUp, Clock, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { buildApiUrl } from '@/app/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '../api';
 
 interface UserApplication {
   id: number;
