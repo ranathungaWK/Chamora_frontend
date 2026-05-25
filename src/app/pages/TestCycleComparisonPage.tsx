@@ -15,7 +15,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/app/components/ui/button';
 import { Checkbox } from '@/app/components/ui/checkbox';
@@ -238,7 +238,7 @@ export function TestCycleComparisonPage() {
         baseline_cycle_id: selectedCycleIds[0],
         regression_threshold_pct: 10.0,
         include_summary: true,
-      });
+      }, selectedCycles, selectedMetrics);
       navigate(`/comparison-results/${appId}`, {
         state: { result, selectedCycles, selectedMetrics },
       });
@@ -271,7 +271,7 @@ export function TestCycleComparisonPage() {
         metric_keys: selectedMetricKeys,
         thresholds: Object.keys(thresholds).length > 0 ? thresholds : undefined,
         include_summary: false,
-      });
+      }, selectedCycles, selectedMetrics);
       navigate(`/comparison-results/${appId}`, {
         state: { result, selectedCycles, selectedMetrics },
       });

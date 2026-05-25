@@ -1,5 +1,5 @@
 import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2, X } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { buildApiUrl, buildRcaApiUrl } from '@/app/api';
 

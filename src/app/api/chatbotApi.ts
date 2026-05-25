@@ -1,16 +1,36 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+import { buildApiUrl } from '@/app/api';
 
 export interface ChatbotResponse {
   answer: string;
   mode: "advisory" | "diagnostic";
+  session_id?: string;
   sources?: string[];
+}
+
+export interface ChatSessionSummary {
+  id: string;
+  application_id: string;
+  title: string;
+  preview: string;
+  timestamp?: string;
+  mode: "advisory" | "diagnostic" | string;
+  status: string;
+}
+
+export interface ChatMessageItem {
+  id: string;
+  type: "bot" | "user";
+  content: string;
+  details?: string;
+  timestamp?: string;
 }
 
 export async function sendChatMessage(
   appId: string,
-  question: string
+  question: string,
+  sessionId?: string
 ): Promise<ChatbotResponse> {
-  const response = await fetch(`${API_BASE_URL}/chatbot`, {
+  const response = await fetch(buildApiUrl('/api/v1/chatbot'), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -18,6 +38,7 @@ export async function sendChatMessage(
     body: JSON.stringify({
       app_id: appId || "1",
       question,
+      session_id: sessionId,
     }),
   });
 
@@ -30,10 +51,8 @@ export async function sendChatMessage(
   return response.json();
 }
 
-export async function getChatSessions(appId: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/chat/sessions/${appId}`
-  );
+export async function getChatSessions(appId: string): Promise<{ sessions: ChatSessionSummary[] }> {
+  const response = await fetch(buildApiUrl(`/api/v1/chat/sessions/${appId}`));
 
   if (!response.ok) {
     throw new Error("Failed to load sessions");
@@ -42,10 +61,8 @@ export async function getChatSessions(appId: string) {
   return response.json();
 }
 
-export async function getChatMessages(sessionId: string) {
-  const response = await fetch(
-    `${API_BASE_URL}/chat/messages/${sessionId}`
-  );
+export async function getChatMessages(sessionId: string): Promise<{ messages: ChatMessageItem[] }> {
+  const response = await fetch(buildApiUrl(`/api/v1/chat/messages/${sessionId}`));
 
   if (!response.ok) {
     throw new Error("Failed to load messages");

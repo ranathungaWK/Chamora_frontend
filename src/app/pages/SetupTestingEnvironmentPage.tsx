@@ -1,5 +1,5 @@
 import { ArrowLeft, BarChart3, CheckCircle2, Github, Shield, TestTube, Server } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Testing-Environment-';
 

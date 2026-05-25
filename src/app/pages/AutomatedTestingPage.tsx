@@ -12,7 +12,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams } from 'react-router-dom';
 import { buildApiUrl } from '@/app/api';
 
 type RunPhase = 'idle' | 'queued' | 'running' | 'completed' | 'failed';
