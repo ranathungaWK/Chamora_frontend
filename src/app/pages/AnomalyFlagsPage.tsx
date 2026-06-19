@@ -44,6 +44,15 @@ interface RootCauseAnalysisResult {
   created_at: string;
 }
 
+interface TestRun {
+  id: number;
+  test_script_id: number;
+  status: string;
+  start_time: string;
+  end_time: string | null;
+  result_file_path: string | null;
+}
+
 const oneDayMs = 24 * 60 * 60 * 1000;
 
 const toDateInputValue = (date: Date) => {
@@ -125,9 +134,61 @@ export function AnomalyFlagsPage() {
   const [order, setOrder] = useState('desc');
   const [severityFilter, setSeverityFilter] = useState('');
   const [{ dateFrom, dateTo }, setDateRange] = useState(getDefaultRange);
+  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+  const [loadingTests, setLoadingTests] = useState(false);
+  const [showTestingAnomalies, setShowTestingAnomalies] = useState(false);
 
   const visibleAnomalies = anomalies.filter((item) => isWithinSelectedRange(item.window_timestamp, dateFrom, dateTo));
   const counts = buildCounts(visibleAnomalies);
+
+  const isWithinTestingPeriod = (timestamp: string, runs: TestRun[]) => {
+    const anomalyTime = new Date(timestamp).getTime();
+    return runs.some((run) => {
+      const start = new Date(run.start_time).getTime();
+      const end = run.end_time ? new Date(run.end_time).getTime() : new Date().getTime();
+      return anomalyTime >= start && anomalyTime <= end;
+    });
+  };
+
+  const anomaliesInTesting = visibleAnomalies.filter((a) => isWithinTestingPeriod(a.window_timestamp, testRuns));
+  const otherAnomalies = visibleAnomalies.filter((a) => !isWithinTestingPeriod(a.window_timestamp, testRuns));
+
+
+  const renderAnomalyCard = (a: AnomalyItem, isTesting: boolean = false) => (
+    <div key={a.id} className={`flex flex-col gap-4 rounded-xl border p-4 shadow-sm md:flex-row md:items-start md:justify-between ${isTesting ? 'border-violet-200 bg-blue-100/60' : 'border-slate-200 bg-white'}`}>
+      <div className="space-y-2">
+          <div className="flex items-center gap-2">
+          <ShieldAlert className={`w-4 h-4 ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`} />
+          <p className="font-semibold text-blue-900">{a.root_cause ? 'Identified by rule based detection' : 'Identified by machine learning model'}</p>
+        </div>
+        <p className="text-sm text-slate-500">Severity: <span className={`font-semibold ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`}>{a.severity}</span></p>
+        <p className="text-xs text-slate-400">Window time: {new Date(a.window_timestamp).toLocaleString()}</p>
+        <p className="text-xs text-slate-400">Score: {a.score} | Config ID: {a.config_id}</p>
+        <details className={`rounded-lg border p-3 ${isTesting ? 'border-violet-200 bg-white/60' : 'border-slate-200 bg-slate-50'}`}>
+          <summary className="cursor-pointer text-sm font-medium text-slate-700">Evidence</summary>
+          <pre className="mt-2 overflow-x-auto text-xs text-slate-600">{JSON.stringify(a.evidence, null, 2)}</pre>
+        </details>
+      </div>
+
+      <div className="flex items-center gap-2 md:justify-end">
+        <Link
+          to={`/anomaly-flags/${appId}/${configId}/${a.id}/root-cause`}
+          className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          Root Cause
+        </Link>
+        <button
+          onClick={() => void acknowledgeOne(a.id)}
+          disabled={mutating}
+          className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400"
+        >
+          <Trash2 className="w-4 h-4" />
+          Acknowledge
+        </button>
+      </div>
+    </div>
+  );
 
   const loadFlags = async () => {
     if (!appId) {
@@ -181,6 +242,43 @@ export function AnomalyFlagsPage() {
   useEffect(() => {
     void loadFlags();
   }, [appId, configId, sortBy, order, severityFilter, dateFrom, dateTo]);
+
+  const loadTestingPeriods = async () => {
+    if (!appId) return;
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    setLoadingTests(true);
+    try {
+      const scriptsResponse = await fetch(buildApiUrl(`/api/v1/k6/applications/${appId}/scripts`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!scriptsResponse.ok) return;
+      const scripts = (await scriptsResponse.json()) as { id: number }[];
+
+      const allRuns: TestRun[] = [];
+      await Promise.all(
+        scripts.map(async (script) => {
+          const historyResponse = await fetch(buildApiUrl(`/api/v1/k6/scripts/${script.id}/history`), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (historyResponse.ok) {
+            const runs = (await historyResponse.json()) as TestRun[];
+            allRuns.push(...runs);
+          }
+        }),
+      );
+      setTestRuns(allRuns);
+    } catch (e) {
+      console.error('Failed to load testing periods', e);
+    } finally {
+      setLoadingTests(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadTestingPeriods();
+  }, [appId]);
 
   const acknowledgeOne = async (anomalyId: string) => {
     const token = localStorage.getItem('access_token');
@@ -281,14 +379,14 @@ export function AnomalyFlagsPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen w-full bg-slate-50">
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="flex items-center gap-4">
           <Link to={`/anomaly-detection/${appId ?? ''}`} className="inline-flex items-center justify-center w-10 h-10 bg-slate-100 rounded-lg">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-slate-800">Anomaly Flags</h1>
+            <h1 className="text-lg font-bold text-blue-900">Anomaly Flags</h1>
             <p className="text-sm text-slate-500">Viewing flags for configuration {configId ?? 'all'}</p>
           </div>
         </div>
@@ -324,10 +422,28 @@ export function AnomalyFlagsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total</p>
-              <p className="mt-2 text-2xl font-bold text-slate-800">{counts.total}</p>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Total</p>
+                  <p className="mt-2 text-2xl font-bold text-blue-900">{counts.total}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTestingAnomalies(!showTestingAnomalies)}
+                  className={`inline-flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all shadow-sm ${
+                    showTestingAnomalies
+                      ? 'bg-blue-800 text-white ring-2 ring-blue-800 ring-offset-2 ring-offset-slate-50'
+                      : 'bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200'
+                  }`}
+                >
+                  Within Testing Periods
+                  <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${showTestingAnomalies ? 'bg-blue-600 text-white' : 'bg-blue-200 text-blue-900'}`}>
+                    {anomaliesInTesting.length}
+                  </span>
+                </button>
+              </div>
             </div>
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-red-600">Critical</p>
@@ -336,10 +452,6 @@ export function AnomalyFlagsPage() {
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-amber-600">Warning</p>
               <p className="mt-2 text-2xl font-bold text-amber-700">{counts.WARNING}</p>
-            </div>
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-indigo-600">Config</p>
-              <p className="mt-2 text-2xl font-bold text-indigo-700">{configId ?? '-'}</p>
             </div>
           </div>
 
@@ -402,59 +514,53 @@ export function AnomalyFlagsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
             <p>
               Date window: <span className="font-semibold">{dateFrom}</span> to <span className="font-semibold">{dateTo}</span>
             </p>
-            <p className="text-indigo-700">Change the dates above to load older anomalies.</p>
+            <p className="text-blue-700">Change the dates above to load older anomalies.</p>
           </div>
 
-          {loading ? (
+          {loading || loadingTests ? (
             <p className="text-sm text-slate-600">Loading anomalies...</p>
           ) : error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>
           ) : visibleAnomalies.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-8 text-center">
               <p className="text-slate-700 font-semibold mb-1">No anomalies found</p>
-              <p className="text-sm text-slate-500">No flags have been recorded for this configuration yet.</p>
+              <p className="text-sm text-slate-500">
+                No flags have been recorded for this configuration yet.
+              </p>
+            </div>
+          ) : showTestingAnomalies ? (
+            <div className="space-y-8">
+              {anomaliesInTesting.length > 0 && (
+                <div>
+                  <h3 className="mb-4 text-base font-semibold text-blue-900">Anomalies During Testing Periods</h3>
+                  <div className="space-y-3">
+                    {anomaliesInTesting.map((a) => renderAnomalyCard(a, true))}
+                  </div>
+                </div>
+              )}
+              {otherAnomalies.length > 0 && (
+                <div>
+                  <h3 className="mb-4 text-base font-semibold text-blue-900">Other Anomalies</h3>
+                  <div className="space-y-3">
+                    {otherAnomalies.map((a) => renderAnomalyCard(a))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : otherAnomalies.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-8 text-center">
+              <p className="text-slate-700 font-semibold mb-1">No general anomalies</p>
+              <p className="text-sm text-slate-500">
+                All recorded anomalies for this period occurred during testing windows. Click the "Testing Periods" button above to view them.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {visibleAnomalies.map((a) => (
-                <div key={a.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                      <ShieldAlert className={`w-4 h-4 ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`} />
-                      <p className="font-semibold text-slate-800">{a.root_cause ? 'Identified by rule based detection' : 'Identified by machine learning model'}</p>
-                    </div>
-                    <p className="text-sm text-slate-500">Severity: <span className={`font-semibold ${a.severity === 'CRITICAL' ? 'text-red-600' : 'text-amber-600'}`}>{a.severity}</span></p>
-                    <p className="text-xs text-slate-400">Window time: {new Date(a.window_timestamp).toLocaleString()}</p>
-                    <p className="text-xs text-slate-400">Score: {a.score} | Config ID: {a.config_id}</p>
-                    <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <summary className="cursor-pointer text-sm font-medium text-slate-700">Evidence</summary>
-                      <pre className="mt-2 overflow-x-auto text-xs text-slate-600">{JSON.stringify(a.evidence, null, 2)}</pre>
-                    </details>
-                  </div>
-
-                  <div className="flex items-center gap-2 md:justify-end">
-                    <Link
-                      to={`/anomaly-flags/${appId}/${configId}/${a.id}/root-cause`}
-                      className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Root Cause
-                    </Link>
-                    <button
-                      onClick={() => void acknowledgeOne(a.id)}
-                      disabled={mutating}
-                      className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:bg-slate-400"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Acknowledge
-                    </button>
-                  </div>
-                </div>
-              ))}
+              {otherAnomalies.map((a) => renderAnomalyCard(a))}
             </div>
           )}
         </div>
@@ -463,7 +569,7 @@ export function AnomalyFlagsPage() {
       {selectedAnomaly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8">
           <div className="w-full max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-5">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-5">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Root Cause Analysis</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-900">Anomaly {selectedAnomaly.id}</h3>
@@ -496,19 +602,19 @@ export function AnomalyFlagsPage() {
                 <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Application</p>
-                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.application_id}</p>
+                    <p className="mt-1 font-medium text-blue-900">{selectedAnomaly.application_id}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Config</p>
-                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.config_id}</p>
+                    <p className="mt-1 font-medium text-blue-900">{selectedAnomaly.config_id}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Window time</p>
-                    <p className="mt-1 font-medium text-slate-800">{new Date(selectedAnomaly.window_timestamp).toLocaleString()}</p>
+                    <p className="mt-1 font-medium text-blue-900">{new Date(selectedAnomaly.window_timestamp).toLocaleString()}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Score</p>
-                    <p className="mt-1 font-medium text-slate-800">{selectedAnomaly.score}</p>
+                    <p className="mt-1 font-medium text-blue-900">{selectedAnomaly.score}</p>
                   </div>
                 </div>
 
@@ -551,19 +657,19 @@ export function AnomalyFlagsPage() {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Root cause</p>
-                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.root_cause}</p>
+                        <p className="mt-1 font-semibold text-blue-900">{analysisResult.root_cause}</p>
                       </div>
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Confidence</p>
-                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.confidence}</p>
+                        <p className="mt-1 font-semibold text-blue-900">{analysisResult.confidence}</p>
                       </div>
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Affected component</p>
-                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.affected_component}</p>
+                        <p className="mt-1 font-semibold text-blue-900">{analysisResult.affected_component}</p>
                       </div>
                       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                         <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Analysis source</p>
-                        <p className="mt-1 font-semibold text-slate-800">{analysisResult.analysis_source}</p>
+                        <p className="mt-1 font-semibold text-blue-900">{analysisResult.analysis_source}</p>
                       </div>
                     </div>
 
@@ -598,7 +704,7 @@ export function AnomalyFlagsPage() {
                   <button
                     type="button"
                     onClick={() => void runRootCauseAnalysis(selectedAnomaly)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:bg-slate-400"
+                    className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-400"
                     disabled={analysisLoading}
                   >
                     <CheckCircle2 className="h-4 w-4" />

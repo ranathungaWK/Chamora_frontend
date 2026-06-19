@@ -96,10 +96,10 @@ function ClassificationBadge({ cls }: { cls: string | null | undefined }) {
   if (!cls) return <span className="text-xs text-slate-400">—</span>;
   const map: Record<string, { label: string; className: string }> = {
     regressed: { label: 'Regressed', className: 'bg-red-100 text-red-700 border-red-200' },
-    improved: { label: 'Improved', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    improved: { label: 'Improved', className: 'bg-blue-200 text-blue-900 border-blue-200' },
     unchanged: { label: 'Unchanged', className: 'bg-slate-100 text-slate-500 border-slate-200' },
     violated: { label: 'Violated', className: 'bg-red-100 text-red-700 border-red-200' },
-    ok: { label: 'OK', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    ok: { label: 'OK', className: 'bg-blue-200 text-blue-900 border-blue-200' },
     no_threshold: { label: 'No threshold', className: 'bg-slate-100 text-slate-400 border-slate-200' },
     no_data: { label: 'No data', className: 'bg-amber-100 text-amber-600 border-amber-200' },
   };
@@ -145,7 +145,7 @@ function MetricRow({
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
       <td className="py-3.5 pl-5 pr-4 align-top">
-        <div className="font-medium text-slate-800 text-sm leading-tight">{label}</div>
+        <div className="font-medium text-blue-900 text-sm leading-tight">{label}</div>
         <div className="text-xs text-slate-400 mt-0.5">
           {result.category} · {result.aggregation} · {result.unit ?? 'unknown'}
         </div>
@@ -159,11 +159,11 @@ function MetricRow({
             const isBaseline = cycle.cycle_id === baselineCycleId;
             return (
               <td key={cycle.cycle_id} className="px-4 py-3.5 text-right align-top">
-                <div className="text-sm font-semibold text-slate-800">
+                <div className="text-sm font-semibold text-blue-900">
                   {formatValue(val, result.unit)}
                 </div>
                 {isBaseline && (
-                  <div className="text-xs text-indigo-400 mt-0.5">baseline</div>
+                  <div className="text-xs text-blue-400 mt-0.5">baseline</div>
                 )}
                 {comp && comp.pct_change !== null && (
                   <div className={`text-xs font-medium mt-0.5 ${
@@ -171,7 +171,7 @@ function MetricRow({
                       ? 'text-red-500'
                       : comp.pct_change === 0
                       ? 'text-slate-400'
-                      : 'text-emerald-500'
+                      : 'text-violet-500'
                   }`}>
                     {formatPct(comp.pct_change)}
                   </div>
@@ -196,7 +196,7 @@ function MetricRow({
       ) : (
         <>
           <td className="px-4 py-3.5 text-right align-top">
-            <div className="text-sm font-semibold text-slate-800">
+            <div className="text-sm font-semibold text-blue-900">
               {formatValue(result.threshold_check?.value, result.unit)}
             </div>
           </td>
@@ -233,13 +233,13 @@ export function ComparisonResultsPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">No results to display</h2>
+          <h2 className="text-lg font-semibold text-blue-900 mb-2">No results to display</h2>
           <p className="text-sm text-slate-500 mb-5">
             Navigate here from the Test Cycle Comparison page.
           </p>
           <Link
             to={`/test-cycle-comparison/${appId ?? ''}`}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white"
           >
             <ArrowLeft className="w-4 h-4" />
             Go to Comparison
@@ -285,11 +285,11 @@ export function ComparisonResultsPage() {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-400 rounded-lg text-blue-900 flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h1 className="text-xl font-bold text-blue-900">
                   Comparison Results
                 </h1>
                 <p className="text-xs text-slate-500">
@@ -307,7 +307,7 @@ export function ComparisonResultsPage() {
                   <TrendingDown className="w-4 h-4" />
                   {result.regression_count} regression{result.regression_count !== 1 ? 's' : ''}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-100 px-3 py-1.5 text-sm font-semibold text-blue-700">
                   <TrendingUp className="w-4 h-4" />
                   {result.improvement_count} improvement{result.improvement_count !== 1 ? 's' : ''}
                 </span>
@@ -321,7 +321,7 @@ export function ComparisonResultsPage() {
                   <XCircle className="w-4 h-4" />
                   {result.violation_count} violation{result.violation_count !== 1 ? 's' : ''}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-100 px-3 py-1.5 text-sm font-semibold text-blue-700">
                   <CheckCircle2 className="w-4 h-4" />
                   {result.ok_count} within threshold
                 </span>
@@ -341,14 +341,14 @@ export function ComparisonResultsPage() {
             return (
               <div
                 key={c.cycle_id}
-                className={`rounded-2xl border p-4 ${isBase ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}
+                className={`rounded-2xl border p-4 ${isBase ? 'border-blue-300 bg-blue-100' : 'border-slate-200 bg-white'}`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-semibold uppercase tracking-[0.18em] ${isBase ? 'text-indigo-600' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-semibold uppercase tracking-[0.18em] ${isBase ? 'text-blue-600' : 'text-slate-500'}`}>
                     {isBase ? 'Baseline' : 'Target'}
                   </span>
                 </div>
-                <p className="font-semibold text-slate-800 text-sm truncate">
+                <p className="font-semibold text-blue-900 text-sm truncate">
                   {cycleLabelMap[c.cycle_id]}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -356,7 +356,7 @@ export function ComparisonResultsPage() {
                 </p>
                 {sc && (
                   <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    sc.status === 'passed' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                    sc.status === 'passed' ? 'bg-blue-200 text-blue-900' : 'bg-red-100 text-red-700'
                   }`}>
                     {sc.status}
                   </span>
@@ -368,18 +368,18 @@ export function ComparisonResultsPage() {
 
         {/* ---- LLM / fallback summary ---- */}
         {summaryText && (
-          <div className="rounded-2xl border border-indigo-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-blue-200 bg-white shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={() => setSummaryExpanded((v) => !v)}
               className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-50/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
                   <BarChart3 className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">AI Analysis</p>
+                  <p className="font-semibold text-blue-900 text-sm">AI Analysis</p>
                   <p className="text-xs text-slate-500">
                     {result.summary?.source === 'llm'
                       ? `Generated by ${result.summary.model ?? 'LLM'}`
@@ -392,7 +392,7 @@ export function ComparisonResultsPage() {
                 : <ChevronDown className="w-5 h-5 text-slate-400" />}
             </button>
             {summaryExpanded && (
-              <div className="px-6 pb-5 border-t border-indigo-100">
+              <div className="px-6 pb-5 border-t border-blue-100">
                 <div className="mt-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-[inherit]">
                   {summaryText}
                 </div>
@@ -415,7 +415,7 @@ export function ComparisonResultsPage() {
         {/* ---- Metric results table ---- */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100">
-            <h2 className="text-base font-semibold text-slate-800">Metric breakdown</h2>
+            <h2 className="text-base font-semibold text-blue-900">Metric breakdown</h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Sorted by significance · {sortedMetrics.length} metric{sortedMetrics.length !== 1 ? 's' : ''}
             </p>
@@ -438,7 +438,7 @@ export function ComparisonResultsPage() {
                             {cycleLabelMap[c.cycle_id]}
                           </div>
                           {c.cycle_id === result.baseline_cycle_id && (
-                            <div className="text-indigo-400 normal-case tracking-normal font-normal text-[11px]">baseline</div>
+                            <div className="text-blue-400 normal-case tracking-normal font-normal text-[11px]">baseline</div>
                           )}
                         </th>
                       ))}

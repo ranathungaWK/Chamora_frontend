@@ -350,15 +350,15 @@ export function AutomatedTestingPage() {
 
   const progressBarClass =
     runPhase === 'running'
-      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 animate-pulse'
+      ? 'bg-blue-600 animate-pulse'
       : runPhase === 'completed'
-        ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+        ? 'bg-blue-600'
         : runPhase === 'failed'
-          ? 'bg-gradient-to-r from-red-500 to-orange-500'
-          : 'bg-gradient-to-r from-slate-400 to-slate-500';
+          ? 'bg-red-500'
+          : 'bg-slate-400';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-slate-50">
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
@@ -369,11 +369,11 @@ export function AutomatedTestingPage() {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
                 <Play className="h-6 w-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">
+                <h1 className="truncate text-xl font-bold text-blue-900">
                   Automated k6 Testing
                 </h1>
                 <p className="text-xs text-slate-600">{appName}</p>
@@ -385,15 +385,15 @@ export function AutomatedTestingPage() {
             runPhase === 'idle'
               ? 'border-slate-200 bg-slate-50'
               : runPhase === 'running' || runPhase === 'queued'
-                ? 'border-blue-200 bg-blue-50'
+                ? 'border-blue-200 bg-blue-100'
                 : runPhase === 'completed'
-                  ? 'border-emerald-200 bg-emerald-50'
+                  ? 'border-blue-200 bg-blue-100'
                   : 'border-red-200 bg-red-50'
           }`}>
             {runPhase === 'queued' || runPhase === 'running' ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             ) : runPhase === 'completed' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-blue-600" />
             ) : runPhase === 'failed' ? (
               <AlertCircle className="h-4 w-4 text-red-600" />
             ) : null}
@@ -403,7 +403,7 @@ export function AutomatedTestingPage() {
                 : runPhase === 'running' || runPhase === 'queued'
                   ? 'text-blue-700'
                   : runPhase === 'completed'
-                    ? 'text-emerald-700'
+                    ? 'text-blue-700'
                     : 'text-red-700'
             }`}>
               {phaseLabel[runPhase]}
@@ -417,13 +417,13 @@ export function AutomatedTestingPage() {
           <div className="col-span-1 space-y-6">
             <div className="rounded-xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
               <div className="mb-4 flex items-center gap-2">
-                <FileCode className="h-5 w-5 text-indigo-600" />
+                <FileCode className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-slate-700">Select Test Script</h2>
               </div>
 
               {loadingScripts ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin text-indigo-600" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin text-blue-600" />
                   <p className="text-slate-600">Loading test scripts...</p>
                 </div>
               ) : testScripts.length === 0 ? (
@@ -439,15 +439,15 @@ export function AutomatedTestingPage() {
                       disabled={runPhase === 'queued' || runPhase === 'running' || showPostRunActions}
                       className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
                         selectedScriptId === script.id.toString()
-                          ? 'border-indigo-300 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md'
-                          : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                          ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-emerald-50 shadow-md'
+                          : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'
                       } ${
                         runPhase === 'queued' || runPhase === 'running' || showPostRunActions
                           ? 'cursor-not-allowed opacity-50'
                           : 'cursor-pointer'
                       }`}
                     >
-                      <p className="mb-1 font-semibold text-slate-800">{script.script_name}</p>
+                      <p className="mb-1 font-semibold text-blue-900">{script.script_name}</p>
                       <p className="text-xs text-slate-500">{script.storage_path}</p>
                     </button>
                   ))}
@@ -465,7 +465,7 @@ export function AutomatedTestingPage() {
                   className={`flex w-full items-center justify-center gap-2 rounded-lg px-6 py-4 font-semibold text-white shadow-md transition-all hover:shadow-lg ${
                     testScripts.length === 0 || loadingScripts
                       ? 'cursor-not-allowed bg-slate-400'
-                      : 'bg-gradient-to-br from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700'
+                      : 'bg-blue-600 hover:bg-slate-800'
                   }`}
                 >
                   <Play className="h-5 w-5" />
@@ -476,7 +476,7 @@ export function AutomatedTestingPage() {
               {(runPhase === 'queued' || runPhase === 'running') && (
                 <button
                   onClick={handleStopTest}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 px-6 py-4 font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-orange-700 hover:shadow-lg"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-6 py-4 font-semibold text-white shadow-md transition-all hover:bg-red-600 hover:shadow-lg"
                 >
                   <Square className="h-5 w-5" />
                   Stop / Cancel Run
@@ -517,7 +517,7 @@ export function AutomatedTestingPage() {
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-800">{phaseLabel[runPhase]}</span>
+                  <span className="font-semibold text-blue-900">{phaseLabel[runPhase]}</span>
                   <span className="text-slate-500">{progressValue}%</span>
                 </div>
                 <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
@@ -549,7 +549,7 @@ export function AutomatedTestingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-1 text-xs text-slate-500">Test Script</p>
-                  <p className="text-sm font-semibold text-slate-800">{selectedScriptName}</p>
+                  <p className="text-sm font-semibold text-blue-900">{selectedScriptName}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-1 text-xs text-slate-500">Status</p>
@@ -559,7 +559,7 @@ export function AutomatedTestingPage() {
                       : runPhase === 'running' || runPhase === 'queued'
                         ? 'text-blue-700'
                         : runPhase === 'completed'
-                          ? 'text-emerald-700'
+                          ? 'text-blue-700'
                           : 'text-red-700'
                   }`}>
                     {phaseLabel[runPhase]}
@@ -567,25 +567,25 @@ export function AutomatedTestingPage() {
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-1 text-xs text-slate-500">Start Time</p>
-                  <p className="text-sm font-semibold text-slate-800">{currentRun?.startTime || 'N/A'}</p>
+                  <p className="text-sm font-semibold text-blue-900">{currentRun?.startTime || 'N/A'}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-1 text-xs text-slate-500">End Time</p>
-                  <p className="text-sm font-semibold text-slate-800">{currentRun?.endTime || 'N/A'}</p>
+                  <p className="text-sm font-semibold text-blue-900">{currentRun?.endTime || 'N/A'}</p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
               <div className="mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-indigo-600" />
+                <FileText className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-slate-700">Result File</h2>
               </div>
 
               {showPostRunActions && currentRun ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-1 text-xs text-slate-500">Result File Name</p>
-                  <p className="break-all text-sm font-semibold text-slate-800">{currentRun.resultFileName}</p>
+                  <p className="break-all text-sm font-semibold text-blue-900">{currentRun.resultFileName}</p>
 
                   <p className="mb-1 mt-4 text-xs text-slate-500">File Path</p>
                   <p className="break-all text-sm text-slate-700">
@@ -598,7 +598,7 @@ export function AutomatedTestingPage() {
                         type="button"
                         onClick={() => void handleDownloadResult()}
                         disabled={resultDownloadLoading}
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 font-medium text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Download className="h-4 w-4" />
                         {resultDownloadLoading ? 'Downloading...' : 'Download Result File'}

@@ -153,7 +153,7 @@ export function ApplicationDashboard() {
   }, [appId]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="flex justify-between items-center">
@@ -165,17 +165,17 @@ export function ApplicationDashboard() {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-400 rounded-lg text-blue-900 flex items-center justify-center">
                 <Activity className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+              <h1 className="text-xl font-bold text-blue-900">
                 {appName}
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-emerald-700 font-medium">Active</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border border-blue-200 rounded-lg">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-blue-700 font-medium">Active</span>
           </div>
         </div>
       </nav>
@@ -185,12 +185,12 @@ export function ApplicationDashboard() {
         {/* Application Details */}
         <div className="mb-6 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
-            <Server className="w-5 h-5 text-indigo-600" />
+            <Server className="w-5 h-5 text-blue-600" />
             Application Details
           </h2>
           <div>
             <p className="text-sm text-slate-500 mb-1">Name</p>
-            <p className="text-slate-800 font-semibold">{appName}</p>
+            <p className="text-blue-900 font-semibold">{appName}</p>
           </div>
         </div>
 
@@ -199,21 +199,21 @@ export function ApplicationDashboard() {
           {/* Anomaly Detection Card */}
           <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
                 <AlertTriangle className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Anomaly Detection</h3>
+                <h3 className="text-xl font-bold text-blue-900">Anomaly Detection</h3>
                 <p className="text-sm text-slate-600">Performance anomaly monitoring</p>
               </div>
             </div>
 
             {/* Anomaly Count Display */}
-            <div className="mb-6 p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl">
+            <div className="mb-6 p-6 bg-blue-200 border-2 border-blue-300 rounded-xl">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium text-slate-600">Anomaly Configuration</p>
                 {configuredEndpointCount > 0 && !isLoadingConfig && (
-                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
                 )}
               </div>
 
@@ -239,7 +239,7 @@ export function ApplicationDashboard() {
             {/* View Details Button */}
             <Link
               to={`/anomaly-detection/${appId}`}
-              className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg font-semibold group"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg font-semibold group"
             >
               View Anomaly Details
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -249,32 +249,32 @@ export function ApplicationDashboard() {
           {/* Test Cycle Comparison Card */}
           <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
                 <BarChart3 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Test Cycle Comparison</h3>
+                <h3 className="text-xl font-bold text-blue-900">Test Cycle Comparison</h3>
                 <p className="text-sm text-slate-600">Compare test results across cycles</p>
               </div>
             </div>
 
             {/* Test Cycles Info Display */}
-            <div className="mb-6 p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl">
+            <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-emerald-50 border-2 border-blue-200 rounded-xl">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium text-slate-600">Available Test Cycles</p>
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
+                <TrendingUp className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-indigo-600">5</span>
+                <span className="text-5xl font-bold text-blue-600">5</span>
                 <span className="text-lg text-slate-600">cycles</span>
               </div>
-              <p className="text-sm text-indigo-700 mt-2 font-medium">✓ Ready for comparison</p>
+              <p className="text-sm text-blue-700 mt-2 font-medium">✓ Ready for comparison</p>
             </div>
 
             {/* Compare Button */}
             <Link
               to={`/test-cycle-comparison/${appId}`}
-              className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg font-semibold group"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3.5 bg-blue-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg font-semibold group"
             >
               Compare Test Cycles
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -286,17 +286,17 @@ export function ApplicationDashboard() {
         <div className="mb-6 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
                 <FolderOpen className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Documents</h3>
+                <h3 className="text-xl font-bold text-blue-900">Documents</h3>
                 <p className="text-sm text-slate-600">Uploaded files for this application</p>
               </div>
             </div>
             <Link
               to={`/onboarding/${appId}/3`}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg font-semibold"
             >
               <Upload className="w-4 h-4" />
               Add Documents
@@ -335,11 +335,11 @@ export function ApplicationDashboard() {
                   className="flex items-center justify-between gap-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-emerald-600" />
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-800 truncate">{doc.file_name}</p>
+                      <p className="font-medium text-blue-900 truncate">{doc.file_name}</p>
                       <p className="text-xs text-slate-500 break-all">{doc.storage_path}</p>
                     </div>
                   </div>
@@ -362,7 +362,7 @@ export function ApplicationDashboard() {
       {/* Floating Chatbot Icon */}
       <Link
         to={`/chatbot/${appId}`}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-xl hover:shadow-indigo-500/50 hover:scale-110 transition-all flex items-center justify-center group"
+        className="fixed bottom-6 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-xl hover:shadow-violet-500/50 hover:scale-110 transition-all flex items-center justify-center group"
       >
         <MessageCircle className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
       </Link>

@@ -130,14 +130,14 @@ export function RootCauseAnalysisPage() {
   }, [anomalyId]);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen w-full bg-slate-50">
       <nav className="border-b border-slate-200 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-4">
           <Link to={`/anomaly-flags/${appId ?? ''}/${configId ?? ''}`} className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
             <ArrowLeft className="h-5 w-5 text-slate-600" />
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-slate-800">Root Cause Analysis</h1>
+            <h1 className="text-lg font-bold text-blue-900">Root Cause Analysis</h1>
             <p className="text-sm text-slate-500">Anomaly {anomalyId ?? '-'} for configuration {configId ?? '-'}</p>
           </div>
         </div>
@@ -170,15 +170,15 @@ export function RootCauseAnalysisPage() {
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Score</p>
-                    <p className="mt-1 font-semibold text-slate-800">{anomaly.score}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{anomaly.score}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Window time</p>
-                    <p className="mt-1 font-semibold text-slate-800">{new Date(anomaly.window_timestamp).toLocaleString()}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{new Date(anomaly.window_timestamp).toLocaleString()}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Config</p>
-                    <p className="mt-1 font-semibold text-slate-800">{anomaly.config_id}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{anomaly.config_id}</p>
                   </div>
                 </div>
 
@@ -192,7 +192,7 @@ export function RootCauseAnalysisPage() {
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-indigo-600" />
+                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">RCA result</h2>
                     <p className="text-sm text-slate-500">Analysis output from the root cause engine.</p>
@@ -202,19 +202,19 @@ export function RootCauseAnalysisPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Root cause</p>
-                    <p className="mt-1 font-semibold text-slate-800">{analysis.root_cause}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{analysis.root_cause}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Confidence</p>
-                    <p className="mt-1 font-semibold text-slate-800">{analysis.confidence}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{analysis.confidence}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Affected component</p>
-                    <p className="mt-1 font-semibold text-slate-800">{analysis.affected_component}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{analysis.affected_component}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Source</p>
-                    <p className="mt-1 font-semibold text-slate-800">{analysis.analysis_source}</p>
+                    <p className="mt-1 font-semibold text-blue-900">{analysis.analysis_source}</p>
                   </div>
                 </div>
 
@@ -231,12 +231,12 @@ export function RootCauseAnalysisPage() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Metrics summary</p>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-                    <div><span className="text-slate-500">CPU</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.cpu_usage_pct}</p></div>
-                    <div><span className="text-slate-500">Memory GB</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.memory_usage_gb}</p></div>
-                    <div><span className="text-slate-500">Pressure %</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.memory_pressure_pct}</p></div>
-                    <div><span className="text-slate-500">Growth MB/s</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.memory_growth_mbps}</p></div>
-                    <div><span className="text-slate-500">Latency P95</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.latency_p95_ms}</p></div>
-                    <div><span className="text-slate-500">Errors %</span><p className="font-semibold text-slate-800">{analysis.metrics_summary.error_rate_pct}</p></div>
+                    <div><span className="text-slate-500">CPU</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.cpu_usage_pct}</p></div>
+                    <div><span className="text-slate-500">Memory GB</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.memory_usage_gb}</p></div>
+                    <div><span className="text-slate-500">Pressure %</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.memory_pressure_pct}</p></div>
+                    <div><span className="text-slate-500">Growth MB/s</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.memory_growth_mbps}</p></div>
+                    <div><span className="text-slate-500">Latency P95</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.latency_p95_ms}</p></div>
+                    <div><span className="text-slate-500">Errors %</span><p className="font-semibold text-blue-900">{analysis.metrics_summary.error_rate_pct}</p></div>
                   </div>
                 </div>
 
@@ -250,7 +250,7 @@ export function RootCauseAnalysisPage() {
                     type="button"
                     onClick={() => window.location.reload()}
                     disabled={runningAnalysis}
-                    className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:bg-slate-400"
+                    className="inline-flex items-center gap-2 h-11 px-4 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Run RCA Again

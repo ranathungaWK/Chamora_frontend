@@ -55,12 +55,17 @@ export function LoginPage() {
     setIsSubmitting(true);
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    // 30-second timeout to avoid hanging forever
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
     try {
       if (isLogin) {
         const response = await fetch(buildApiUrl('/api/v1/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, timezone }),
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -77,6 +82,7 @@ export function LoginPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ full_name: name, email, password, timezone }),
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -98,8 +104,13 @@ export function LoginPage() {
 
       navigate('/dashboard');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Something went wrong');
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setErrorMessage('Login timed out. The server may be starting up — please try again.');
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Something went wrong');
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   };
@@ -111,9 +122,9 @@ export function LoginPage() {
           {/* Back to Home Link */}
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors mb-8"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors mb-8"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-400 rounded-lg text-blue-900 flex items-center justify-center">
               <Activity className="w-6 h-6 text-white" />
             </div>
             <span className="font-semibold">Chamora</span>
@@ -133,7 +144,7 @@ export function LoginPage() {
               { title: 'Configure next', text: 'Set the endpoints mentioned in the project flow.' },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="inline-flex items-center gap-2 text-indigo-700 font-semibold mb-2">
+                <div className="inline-flex items-center gap-2 text-blue-700 font-semibold mb-2">
                   <Shield className="w-4 h-4" />
                   {item.title}
                 </div>
@@ -148,23 +159,23 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={handleCopyRepo}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-medium text-slate-700 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-medium text-slate-700 hover:border-blue-300 hover:text-blue-600 transition-colors"
               >
                 <Copy className="w-4 h-4" />
                 Copy testing repo URL
               </button>
               <Link
                 to="/setup-testing-environment"
-                className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 transition-colors"
+                className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-100 px-4 py-2.5 font-medium text-blue-700 hover:border-blue-300 hover:bg-blue-100 transition-colors"
               >
                 <TestTube className="w-4 h-4" />
                 How to setup testing environment
               </Link>
-              {copyFeedback ? <span className="text-sm text-emerald-600">{copyFeedback}</span> : null}
+              {copyFeedback ? <span className="text-sm text-blue-600">{copyFeedback}</span> : null}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 p-6 text-white shadow-xl shadow-indigo-100">
+          <div className="rounded-2xl bg-blue-600 p-6 text-white shadow-xl shadow-blue-100">
             <div className="grid gap-3 text-white/95">
               {[
                 'Start by clicking Get Started.',
@@ -188,10 +199,10 @@ export function LoginPage() {
           <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl p-8 lg:sticky lg:top-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-400 rounded-xl text-blue-900 flex items-center justify-center mx-auto mb-4">
                 <Activity className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              <h1 className="text-3xl font-bold text-blue-900 mb-2">
                 {isLogin ? 'Welcome Back' : 'Create Account'}
               </h1>
               <p className="text-slate-600">
@@ -206,8 +217,8 @@ export function LoginPage() {
                 onClick={() => setIsLogin(true)}
                 className={`flex-1 py-2.5 rounded-md font-medium transition-all ${
                   isLogin
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-800'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-blue-900'
                 }`}
               >
                 Login
@@ -216,8 +227,8 @@ export function LoginPage() {
                 onClick={() => setIsLogin(false)}
                 className={`flex-1 py-2.5 rounded-md font-medium transition-all ${
                   !isLogin
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-800'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-blue-900'
                 }`}
               >
                 Sign Up
@@ -238,7 +249,7 @@ export function LoginPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your full name"
                     required={!isLogin}
-                    className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
               )}
@@ -256,7 +267,7 @@ export function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
-                    className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg pl-11 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg pl-11 pr-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
               </div>
@@ -274,7 +285,7 @@ export function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg pl-11 pr-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg pl-11 pr-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
               </div>
@@ -284,7 +295,7 @@ export function LoginPage() {
                 <div className="text-right">
                   <button
                     type="button"
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Forgot Password?
                   </button>
@@ -301,7 +312,7 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-br from-indigo-500 to-cyan-500 text-white rounded-lg hover:from-indigo-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg font-semibold"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg font-semibold"
               >
                 {isSubmitting
                   ? 'Please wait...'

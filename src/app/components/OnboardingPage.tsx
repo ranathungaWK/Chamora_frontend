@@ -469,7 +469,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-md">
         <div className="flex justify-between items-center">
@@ -478,11 +478,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
               onClick={handleBackToDashboard}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Activity className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h1 className="text-xl font-bold text-blue-900">
                   {isEditMode ? 'Update Application' : 'Application Onboarding'}
                 </h1>
                 <p className="text-xs text-slate-600 font-medium">
@@ -491,11 +491,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
               </div>
             </button>
           </div>
-          <div className="flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-xl shadow-sm">
             <span className="text-sm text-slate-700 font-medium">Phase {currentPhase} of 3</span>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-xs text-emerald-600 font-semibold">In Progress</span>
+              <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+              <span className="text-xs text-blue-600 font-semibold">In Progress</span>
             </div>
           </div>
         </div>
@@ -513,9 +513,9 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   onClick={() => goToPhase(phase as 1 | 2 | 3)}
                   className={`flex-1 flex items-center gap-4 px-6 py-4 rounded-lg transition-all ${
                     currentPhase === phase
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg scale-105'
+                      ? 'bg-blue-600 text-white shadow-lg scale-105'
                       : completedPhases.has(phase)
-                      ? 'bg-emerald-50 text-emerald-700 border-2 border-emerald-200'
+                      ? 'bg-blue-50 text-blue-700 border-2 border-blue-200'
                       : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
                   } ${phase !== 3 ? 'mr-4' : ''}`}
                 >
@@ -523,7 +523,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                     currentPhase === phase
                       ? 'bg-white/20'
                       : completedPhases.has(phase)
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-violet-500 text-white'
                       : 'bg-slate-200 text-slate-600'
                   }`}>
                     {completedPhases.has(phase) ? <Check className="w-5 h-5" /> : phase}
@@ -546,11 +546,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
         {currentPhase === 1 && (
           <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Server className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">Application Details</h2>
+                <h2 className="text-2xl font-bold text-blue-900">Application Details</h2>
                 <p className="text-sm text-slate-600">Provide your application's basic information and configuration</p>
               </div>
             </div>
@@ -566,7 +566,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   value={phase1Data.applicationName}
                   onChange={(e) => setPhase1Data({ ...phase1Data, applicationName: e.target.value })}
                   placeholder="Enter application name"
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                 />
               </div>
 
@@ -580,7 +580,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   onChange={(e) => setPhase1Data({ ...phase1Data, description: e.target.value })}
                   placeholder="Enter application description"
                   rows={3}
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all resize-none"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all resize-none"
                 />
               </div>
 
@@ -594,7 +594,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   value={phase1Data.githubRepo}
                   onChange={(e) => setPhase1Data({ ...phase1Data, githubRepo: e.target.value })}
                   placeholder="https://github.com/your-org/your-repo"
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                 />
               </div>
 
@@ -609,7 +609,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                     value={phase1Data.grafanaEndpoint}
                     onChange={(e) => setPhase1Data({ ...phase1Data, grafanaEndpoint: e.target.value })}
                     placeholder="https://grafana.example.com"
-                    className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
 
@@ -622,7 +622,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                     value={phase1Data.victoriaMetricsEndpoint}
                     onChange={(e) => setPhase1Data({ ...phase1Data, victoriaMetricsEndpoint: e.target.value })}
                     placeholder="https://victoria-metrics.example.com"
-                    className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                    className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
               </div>
@@ -635,7 +635,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   </label>
                   <button
                     onClick={addBlackboxTarget}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg"
                   >
                     <Plus className="w-4 h-4" />
                     Add Target
@@ -658,7 +658,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                             value={target.targetName}
                             onChange={(e) => updateBlackboxTarget(target.id, 'targetName', e.target.value)}
                             placeholder="Target name"
-                            className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 rounded px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
+                            className="w-full bg-slate-50 border border-slate-300 focus:border-blue-400 rounded px-3 py-2 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all text-sm"
                           />
                         </div>
                         <div className="col-span-5">
@@ -667,7 +667,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                             value={target.containerName}
                             onChange={(e) => updateBlackboxTarget(target.id, 'containerName', e.target.value)}
                             placeholder="Container name"
-                            className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 rounded px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
+                            className="w-full bg-slate-50 border border-slate-300 focus:border-blue-400 rounded px-3 py-2 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all text-sm"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
@@ -704,7 +704,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                 <button
                   onClick={handlePhaseSubmit}
                   disabled={!phase1Data.applicationName || isSubmitting}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Registering...' : 'Submit & Continue'}
                   <ArrowRight className="w-4 h-4" />
@@ -718,11 +718,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
         {currentPhase === 2 && (
           <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-900 rounded-lg flex items-center justify-center">
                 <TestTube className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">Test Cycles Configuration</h2>
+                <h2 className="text-2xl font-bold text-blue-900">Test Cycles Configuration</h2>
                 <p className="text-sm text-slate-600">Upload k6 test scripts and provide test cycle details</p>
               </div>
             </div>
@@ -736,7 +736,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                 <select
                   value={phase2Data.applicationId}
                   onChange={(e) => setPhase2Data({ ...phase2Data, applicationId: e.target.value })}
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   disabled={isLoadingApplications}
                 >
                   <option value="">{isLoadingApplications ? 'Loading applications...' : 'Select application'}</option>
@@ -763,7 +763,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   value={phase2Data.testScriptName}
                   onChange={(e) => setPhase2Data({ ...phase2Data, testScriptName: e.target.value })}
                   placeholder="Enter test script name"
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                 />
               </div>
 
@@ -777,7 +777,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   onChange={(e) => setPhase2Data({ ...phase2Data, description: e.target.value })}
                   placeholder="Enter test script description"
                   rows={3}
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all resize-none"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all resize-none"
                 />
               </div>
 
@@ -796,9 +796,9 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   />
                   <label
                     htmlFor="script-upload"
-                    className="flex items-center justify-center gap-3 w-full bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 hover:border-indigo-400 rounded-lg px-6 py-8 cursor-pointer transition-all hover:bg-gradient-to-br hover:from-indigo-100 hover:to-purple-100"
+                    className="flex items-center justify-center gap-3 w-full bg-blue-100 border-2 border-dashed border-blue-300 hover:border-blue-400 rounded-lg px-6 py-8 cursor-pointer transition-all hover:bg-blue-200"
                   >
-                    <Upload className="w-8 h-8 text-indigo-600" />
+                    <Upload className="w-8 h-8 text-blue-600" />
                     <div className="text-center">
                       <p className="font-semibold text-slate-700">
                         {phase2Data.scriptFileName || 'Click to upload or drag and drop'}
@@ -808,9 +808,9 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   </label>
                 </div>
                 {phase2Data.scriptFileName && (
-                  <div className="mt-3 flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <FileText className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm text-emerald-700 font-medium">{phase2Data.scriptFileName}</span>
+                  <div className="mt-3 flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-blue-700 font-medium">{phase2Data.scriptFileName}</span>
                   </div>
                 )}
               </div>
@@ -829,7 +829,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                 <button
                   onClick={handlePhaseSubmit}
                   disabled={!phase2Data.applicationId || !phase2Data.testScriptName || !phase2Data.scriptFile || isSubmitting}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-8 py-3 bg-blue-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Test Cycles'}
                   <Check className="w-4 h-4" />
@@ -843,11 +843,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
         {currentPhase === 3 && (
           <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                 <FolderOpen className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-800">Application Documents</h2>
+                <h2 className="text-2xl font-bold text-blue-900">Application Documents</h2>
                 <p className="text-sm text-slate-600">Upload relevant documents and resources for your application</p>
               </div>
             </div>
@@ -863,7 +863,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   value={phase3Data.applicationName}
                   onChange={(e) => setPhase3Data({ ...phase3Data, applicationName: e.target.value })}
                   placeholder="Enter application name"
-                  className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-lg px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                 />
               </div>
 
@@ -882,9 +882,9 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                   />
                   <label
                     htmlFor="document-upload"
-                    className={`flex items-center justify-center gap-3 w-full bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-dashed border-emerald-300 hover:border-emerald-400 rounded-lg px-6 py-12 cursor-pointer transition-all hover:bg-gradient-to-br hover:from-emerald-100 hover:to-teal-100 ${isUploadingDocuments ? 'opacity-70 pointer-events-none' : ''}`}
+                    className={`flex items-center justify-center gap-3 w-full bg-blue-100 border-2 border-dashed border-blue-300 hover:border-blue-400 rounded-lg px-6 py-12 cursor-pointer transition-all hover:bg-blue-200 ${isUploadingDocuments ? 'opacity-70 pointer-events-none' : ''}`}
                   >
-                    <Upload className="w-10 h-10 text-emerald-600" />
+                    <Upload className="w-10 h-10 text-blue-600" />
                     <div className="text-center">
                       <p className="font-semibold text-slate-700 text-lg">{isUploadingDocuments ? 'Uploading documents...' : 'Click to upload or drag and drop'}</p>
                       <p className="text-sm text-slate-500 mt-1">PDF, DOC, DOCX, TXT, or any other document types</p>
@@ -917,11 +917,11 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                         className="flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-all"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-emerald-600" />
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-blue-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-800">{doc.file_name}</p>
+                            <p className="font-medium text-blue-900">{doc.file_name}</p>
                             <p className="text-xs text-slate-500 break-all">{doc.storage_path}</p>
                           </div>
                         </div>
@@ -952,7 +952,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                 <button
                   onClick={handlePhaseSubmit}
                   disabled={!phase3Data.applicationName}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save Documents
                   <Check className="w-4 h-4" />
