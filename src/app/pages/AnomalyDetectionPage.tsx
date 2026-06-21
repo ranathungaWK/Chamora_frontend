@@ -1,6 +1,7 @@
-import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { buildApiUrl } from '../api';
 
 const ML_TRAINING_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000;
@@ -308,18 +309,26 @@ export function AnomalyDetectionPage() {
 
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => ({}));
-        const detail =
-          typeof errorPayload.detail === 'string'
-            ? errorPayload.detail
-            : hasExistingConfig
-              ? 'Failed to update configuration'
-              : 'Failed to create configuration';
+        let detail = '';
+        if (Array.isArray(errorPayload.detail)) {
+          detail = errorPayload.detail.map((err: any) => {
+            const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'Field';
+            return `${field}: ${err.msg}`;
+          }).join(' | ');
+        } else if (typeof errorPayload.detail === 'string') {
+          detail = errorPayload.detail;
+        } else {
+          detail = hasExistingConfig
+            ? 'Failed to update configuration'
+            : 'Failed to create configuration';
+        }
         throw new Error(detail);
       }
 
       setHasExistingConfig(true);
       setConfigMessage('Rule-based configuration saved successfully.');
       setConfigMessageType('success');
+      toast.success('Configuration saved successfully');
 
       const refreshResponse = await fetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
         headers: {
@@ -331,8 +340,10 @@ export function AnomalyDetectionPage() {
         setConfigSummaries(summaries);
       }
     } catch (error) {
-      setConfigMessage(error instanceof Error ? error.message : 'Failed to save configuration');
+      const msg = error instanceof Error ? error.message : 'Failed to save configuration';
+      setConfigMessage(msg);
       setConfigMessageType('error');
+      toast.error(msg);
     } finally {
       setIsSavingConfig(false);
     }
@@ -441,7 +452,7 @@ export function AnomalyDetectionPage() {
                 disabled={!selectedEndpointId || isSavingConfig || isLoadingConfig}
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all text-sm font-medium"
               >
-                <Save className="w-4 h-4" />
+                {isSavingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isSavingConfig ? 'Saving...' : hasExistingConfig ? 'Update Configuration' : 'Create Configuration'}
               </button>
             </div>
@@ -583,7 +594,10 @@ export function AnomalyDetectionPage() {
           </div>
 
           {isLoadingSummaries ? (
-            <p className="text-sm text-slate-600">Loading saved configurations...</p>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <span>Loading saved configurations...</span>
+            </div>
           ) : summaryError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {summaryError}
@@ -647,8 +661,13 @@ export function AnomalyDetectionPage() {
                     </div>
                     <button
                       type="button"
+                      disabled={!cooldown.isReady}
                       onClick={() => void handleViewModelsClick(summary)}
-                      className="mt-3 inline-flex items-center justify-center h-10 px-4 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm"
+                      className={`mt-3 inline-flex items-center justify-center h-10 px-4 rounded-lg text-sm font-medium transition shadow-sm ${
+                        !cooldown.isReady 
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                      }`}
                     >
                       View Available Models
                     </button>
@@ -671,9 +690,11 @@ export function AnomalyDetectionPage() {
                           const updated = await res.json();
                           // update local state
                           setConfigSummaries((prev) => prev.map((s) => (s.config_id === updated.id ? { ...s, ml_inference_need: updated.ml_inference_need } : s)));
+                          toast.success(updated.ml_inference_need ? 'ML Training scheduled' : 'ML Training disabled');
                         } catch (err) {
                           // eslint-disable-next-line no-console
                           console.error(err);
+                          toast.error('Failed to update ML training status');
                         }
                       }}
                       // keep sizing consistent with other action buttons
@@ -689,12 +710,23 @@ export function AnomalyDetectionPage() {
                       {trainingButtonLabel}
                     </button>
 
-                    <Link
-                      to={`/anomaly-flags/${appId}/${summary.config_id}`}
-                      className="inline-flex items-center justify-center h-11 px-4 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition min-w-[120px]"
-                    >
-                      View Flags
-                    </Link>
+                    {!cooldown.isReady ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center justify-center h-11 px-4 bg-slate-200 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed min-w-[120px]"
+                      >
+                        View Flags
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/anomaly-flags/${appId}/${summary.config_id}`}
+                        state={{ endpointName: summary.endpoint_name }}
+                        className="inline-flex items-center justify-center h-11 px-4 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition min-w-[120px]"
+                      >
+                        View Flags
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => handleEditConfigClick(summary)}
@@ -742,7 +774,10 @@ export function AnomalyDetectionPage() {
 
             <div className="max-h-[70vh] overflow-auto p-6">
               {isLoadingModels ? (
-                <p className="text-sm text-slate-600">Loading model metrics...</p>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span>Loading model metrics...</span>
+                </div>
               ) : modelsError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                   {modelsError}

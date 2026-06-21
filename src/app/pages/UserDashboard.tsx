@@ -1,4 +1,4 @@
-import { Activity, LogOut, Plus, Server, TestTube, FolderOpen, TrendingUp, Clock, Play } from 'lucide-react';
+import { Activity, LogOut, Plus, Server, TestTube, FolderOpen, TrendingUp, Clock, Play, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../api';
@@ -22,6 +22,7 @@ export function UserDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [applications, setApplications] = useState<UserApplication[]>([]);
+  const [appHealthStatuses, setAppHealthStatuses] = useState<Record<number, 'active' | 'inactive' | 'loading'>>({});
   const [isLoadingApps, setIsLoadingApps] = useState(true);
   const [appsError, setAppsError] = useState('');
 
@@ -54,6 +55,24 @@ export function UserDashboard() {
 
         const data = (await response.json()) as UserApplication[];
         setApplications(data);
+
+        // Initialize health statuses as loading
+        const initialHealth: Record<number, 'active' | 'inactive' | 'loading'> = {};
+        data.forEach(app => { initialHealth[app.id] = 'loading'; });
+        setAppHealthStatuses(initialHealth);
+
+        // Fetch health status for each application
+        data.forEach(async (app) => {
+          try {
+            const healthRes = await fetch(buildApiUrl(`/api/v1/application/${app.id}/health-check`), {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const healthData = await healthRes.json();
+            setAppHealthStatuses(prev => ({ ...prev, [app.id]: healthData.status }));
+          } catch (error) {
+            setAppHealthStatuses(prev => ({ ...prev, [app.id]: 'inactive' }));
+          }
+        });
       } catch (error) {
         setAppsError(error instanceof Error ? error.message : 'Failed to load applications');
       } finally {
@@ -162,8 +181,9 @@ export function UserDashboard() {
         )}
 
         {isLoadingApps && (
-          <div className="mb-6 rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600">
-            Loading your applications...
+          <div className="mb-6 rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-600 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+            <span>Loading your applications...</span>
           </div>
         )}
 
@@ -182,10 +202,22 @@ export function UserDashboard() {
                     <div>
                       <h3 className="text-xl font-bold text-blue-900">{app.name}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-200 text-blue-900">
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                          active
-                        </span>
+                        {appHealthStatuses[app.id] === 'active' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            active
+                          </span>
+                        ) : appHealthStatuses[app.id] === 'loading' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                            loading
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            inactive
+                          </span>
+                        )}
                         <span className="text-xs text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           synced now

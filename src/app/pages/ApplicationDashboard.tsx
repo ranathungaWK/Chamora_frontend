@@ -11,6 +11,7 @@ interface AnomalyConfig {
 
 interface UserApplication {
   id: number;
+  name: string;
   endpoints?: Array<{ id: number }>;
 }
 
@@ -23,8 +24,8 @@ interface DocumentRecord {
 export function ApplicationDashboard() {
   const { appId } = useParams();
 
-  // Mock data - in real app, fetch based on appId
-  const appName = appId === 'hms-001' ? 'Hospital Management System' : 'Application Dashboard';
+  const [appName, setAppName] = useState('Loading...');
+  const [appHealthStatus, setAppHealthStatus] = useState<'active' | 'inactive' | 'loading'>('loading');
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState('');
   const [configuredEndpointCount, setConfiguredEndpointCount] = useState(0);
@@ -136,6 +137,11 @@ export function ApplicationDashboard() {
         const allConfigs = (await configsResponse.json()) as AnomalyConfig[];
 
         const currentApp = applications.find((app) => String(app.id) === String(appId));
+        if (currentApp) {
+          setAppName(currentApp.name);
+        } else {
+          setAppName('Application Dashboard');
+        }
         const endpointIds = new Set((currentApp?.endpoints ?? []).map((endpoint) => endpoint.id));
 
         const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
@@ -145,6 +151,16 @@ export function ApplicationDashboard() {
         setConfiguredEndpointCount(0);
       } finally {
         setIsLoadingConfig(false);
+      }
+
+      try {
+        const healthRes = await fetch(buildApiUrl(`/api/v1/application/${appId}/health-check`), {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const healthData = await healthRes.json();
+        setAppHealthStatus(healthData.status);
+      } catch (error) {
+        setAppHealthStatus('inactive');
       }
     };
 
@@ -173,9 +189,23 @@ export function ApplicationDashboard() {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border border-blue-200 rounded-lg">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-blue-700 font-medium">Active</span>
+          <div className={`flex items-center gap-2 px-4 py-2 border rounded-lg ${
+            appHealthStatus === 'active' ? 'bg-emerald-100 border-emerald-200' : 
+            appHealthStatus === 'loading' ? 'bg-blue-100 border-blue-200' : 'bg-red-100 border-red-200'
+          }`}>
+            {appHealthStatus === 'active' ? (
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            ) : appHealthStatus === 'loading' ? (
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+            ) : (
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+            )}
+            <span className={`font-medium ${
+              appHealthStatus === 'active' ? 'text-emerald-700' : 
+              appHealthStatus === 'loading' ? 'text-blue-700' : 'text-red-700'
+            }`}>
+              {appHealthStatus === 'active' ? 'Active' : appHealthStatus === 'loading' ? 'Loading' : 'Inactive'}
+            </span>
           </div>
         </div>
       </nav>
@@ -218,7 +248,10 @@ export function ApplicationDashboard() {
               </div>
 
               {isLoadingConfig ? (
-                <p className="text-sm text-slate-600">Loading anomaly configuration status...</p>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <p className="text-sm text-slate-600">Loading anomaly configuration status...</p>
+                </div>
               ) : configError ? (
                 <p className="text-sm text-red-700">{configError}</p>
               ) : configuredEndpointCount === 0 ? (
@@ -311,8 +344,9 @@ export function ApplicationDashboard() {
           )}
 
           {isLoadingDocuments ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              Loading uploaded documents...
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <span>Loading uploaded documents...</span>
             </div>
           ) : documents.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center">

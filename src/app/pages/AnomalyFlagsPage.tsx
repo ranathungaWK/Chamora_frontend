@@ -1,5 +1,5 @@
-import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2, X } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2, X, Loader2 } from 'lucide-react';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { buildApiUrl, buildRcaApiUrl } from '@/app/api';
 
@@ -122,6 +122,8 @@ const getDefaultRange = () => {
 
 export function AnomalyFlagsPage() {
   const { appId, configId } = useParams();
+  const location = useLocation();
+  const endpointName = location.state?.endpointName;
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [mutating, setMutating] = useState(false);
@@ -183,7 +185,7 @@ export function AnomalyFlagsPage() {
           disabled={mutating}
           className="inline-flex items-center gap-2 h-10 px-3 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400"
         >
-          <Trash2 className="w-4 h-4" />
+          {mutating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
           Acknowledge
         </button>
       </div>
@@ -387,7 +389,7 @@ export function AnomalyFlagsPage() {
           </Link>
           <div>
             <h1 className="text-lg font-bold text-blue-900">Anomaly Flags</h1>
-            <p className="text-sm text-slate-500">Viewing flags for configuration {configId ?? 'all'}</p>
+            <p className="text-sm text-slate-500">Viewing flags for {endpointName ? `endpoint ${endpointName}` : `configuration ${configId ?? 'all'}`}</p>
           </div>
         </div>
       </nav>
@@ -404,10 +406,10 @@ export function AnomalyFlagsPage() {
               <button
                 type="button"
                 onClick={() => void loadFlags()}
-                className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:bg-slate-100"
                 disabled={loading || mutating}
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
               <button
@@ -416,7 +418,7 @@ export function AnomalyFlagsPage() {
                 className="inline-flex items-center gap-2 h-10 px-3 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:bg-slate-400"
                 disabled={loading || mutating || visibleAnomalies.length === 0}
               >
-                <Trash2 className="w-4 h-4" />
+                {mutating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 Acknowledge All
               </button>
             </div>
@@ -522,7 +524,10 @@ export function AnomalyFlagsPage() {
           </div>
 
           {loading || loadingTests ? (
-            <p className="text-sm text-slate-600">Loading anomalies...</p>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <span>Loading anomalies...</span>
+            </div>
           ) : error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>
           ) : visibleAnomalies.length === 0 ? (
@@ -649,7 +654,10 @@ export function AnomalyFlagsPage() {
                 </div>
 
                 {analysisLoading ? (
-                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Running root cause analysis...</div>
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-2 text-sm text-slate-600">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                    <span>Running root cause analysis...</span>
+                  </div>
                 ) : analysisError ? (
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{analysisError}</div>
                 ) : analysisResult ? (
@@ -707,7 +715,7 @@ export function AnomalyFlagsPage() {
                     className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-400"
                     disabled={analysisLoading}
                   >
-                    <CheckCircle2 className="h-4 w-4" />
+                    {analysisLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                     Run RCA
                   </button>
                   <button

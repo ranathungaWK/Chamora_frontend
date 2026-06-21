@@ -1,4 +1,4 @@
-import { Activity, ArrowLeft, ArrowRight, Check, Plus, Trash2, Upload, FileText, Server, TestTube, FolderOpen, SkipForward, AlertCircle } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Check, Plus, Trash2, Upload, FileText, Server, TestTube, FolderOpen, SkipForward, AlertCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { buildApiUrl } from '@/app/api';
@@ -19,6 +19,7 @@ interface Phase1Data {
   githubRepo: string;
   grafanaEndpoint: string;
   victoriaMetricsEndpoint: string;
+  healthEndpoint: string;
   blackboxTargets: BlackboxTarget[];
 }
 
@@ -82,6 +83,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
     githubRepo: '',
     grafanaEndpoint: '',
     victoriaMetricsEndpoint: '',
+    healthEndpoint: '',
     blackboxTargets: [{ id: '1', targetName: '', containerName: '' }]
   });
 
@@ -379,6 +381,7 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
             github_repo: phase1Data.githubRepo || undefined,
             grafana_url: phase1Data.grafanaEndpoint,
             victoria_metrics_url: phase1Data.victoriaMetricsEndpoint,
+            health_endpoint: phase1Data.healthEndpoint,
             endpoints: phase1Data.blackboxTargets.map(target => ({
               target_name: target.targetName,
               container_name: target.containerName,
@@ -625,6 +628,20 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
                     className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                 </div>
+              </div>
+
+              {/* Health Endpoint */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Health Endpoint (e.g., /health, /ping) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={phase1Data.healthEndpoint}
+                  onChange={(e) => setPhase1Data({ ...phase1Data, healthEndpoint: e.target.value })}
+                  placeholder="https://api.example.com/health"
+                  className="w-full bg-white border-2 border-slate-300 focus:border-blue-400 rounded-lg px-4 py-3 text-blue-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
+                />
               </div>
 
               {/* Blackbox Targets Table */}
@@ -902,8 +919,9 @@ export function OnboardingPage({ onBackToDashboard }: OnboardingPageProps) {
               )}
 
               {isLoadingDocuments ? (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  Loading uploaded documents...
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span>Loading uploaded documents...</span>
                 </div>
               ) : phase3Data.documents.length > 0 && (
                 <div>
