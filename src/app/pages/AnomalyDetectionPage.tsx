@@ -1,7 +1,8 @@
-import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { ArrowLeft, AlertTriangle, Database, Layers, Settings, Save, Sparkles, X, Loader2 } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { buildApiUrl } from '@/app/api';
+import { toast } from 'sonner';
+import { buildApiUrl } from '../api';
 
 const ML_TRAINING_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000;
 
@@ -308,18 +309,26 @@ export function AnomalyDetectionPage() {
 
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => ({}));
-        const detail =
-          typeof errorPayload.detail === 'string'
-            ? errorPayload.detail
-            : hasExistingConfig
-              ? 'Failed to update configuration'
-              : 'Failed to create configuration';
+        let detail = '';
+        if (Array.isArray(errorPayload.detail)) {
+          detail = errorPayload.detail.map((err: any) => {
+            const field = err.loc && err.loc.length > 1 ? err.loc[err.loc.length - 1] : 'Field';
+            return `${field}: ${err.msg}`;
+          }).join(' | ');
+        } else if (typeof errorPayload.detail === 'string') {
+          detail = errorPayload.detail;
+        } else {
+          detail = hasExistingConfig
+            ? 'Failed to update configuration'
+            : 'Failed to create configuration';
+        }
         throw new Error(detail);
       }
 
       setHasExistingConfig(true);
       setConfigMessage('Rule-based configuration saved successfully.');
       setConfigMessageType('success');
+      toast.success('Configuration saved successfully');
 
       const refreshResponse = await fetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
         headers: {
@@ -331,8 +340,10 @@ export function AnomalyDetectionPage() {
         setConfigSummaries(summaries);
       }
     } catch (error) {
-      setConfigMessage(error instanceof Error ? error.message : 'Failed to save configuration');
+      const msg = error instanceof Error ? error.message : 'Failed to save configuration';
+      setConfigMessage(msg);
       setConfigMessageType('error');
+      toast.error(msg);
     } finally {
       setIsSavingConfig(false);
     }
@@ -385,7 +396,7 @@ export function AnomalyDetectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation Bar */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-sm">
         <div className="flex justify-between items-center">
@@ -397,20 +408,20 @@ export function AnomalyDetectionPage() {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                <h1 className="text-xl font-bold text-blue-900">
                   Anomaly Detection
                 </h1>
                 <p className="text-xs text-slate-600">{appName}</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-            <Database className="w-4 h-4 text-emerald-600" />
-            <span className="text-emerald-700 font-medium">{configSummaries.length} Saved Configurations</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border border-blue-200 rounded-lg">
+            <Database className="w-4 h-4 text-blue-600" />
+            <span className="text-blue-700 font-medium">{configSummaries.length} Saved Configurations</span>
           </div>
         </div>
       </nav>
@@ -424,24 +435,24 @@ export function AnomalyDetectionPage() {
               <h2 className="text-lg font-semibold text-slate-700 mb-1">Rule-Based System Configuration</h2>
               <p className="text-sm text-slate-500">Configure anomaly detection thresholds and activation settings.</p>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-200 rounded-lg">
               <Settings className="w-5 h-5 text-blue-600" />
               <span className="font-semibold text-blue-700">Configuration</span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-50 border-2 border-blue-200 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-slate-800">Configuration Fields</h3>
+                <h3 className="font-semibold text-blue-900">Configuration Fields</h3>
               </div>
               <button
                 onClick={handleSaveConfig}
                 disabled={!selectedEndpointId || isSavingConfig || isLoadingConfig}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all text-sm font-medium"
               >
-                <Save className="w-4 h-4" />
+                {isSavingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isSavingConfig ? 'Saving...' : hasExistingConfig ? 'Update Configuration' : 'Create Configuration'}
               </button>
             </div>
@@ -451,7 +462,7 @@ export function AnomalyDetectionPage() {
               <select
                 value={selectedEndpointId ?? ''}
                 onChange={(e) => setSelectedEndpointId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               >
                 {endpoints.length === 0 ? (
                   <option value="">No endpoints available</option>
@@ -473,7 +484,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.latency_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, latency_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -483,7 +494,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.error_rate_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, error_rate_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -492,7 +503,7 @@ export function AnomalyDetectionPage() {
                   type="number"
                   value={ruleConfig.failure_streak_limit}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, failure_streak_limit: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -502,7 +513,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.cpu_usage_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, cpu_usage_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -512,7 +523,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.memory_pressure_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, memory_pressure_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -522,7 +533,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.disk_io_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, disk_io_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -532,7 +543,7 @@ export function AnomalyDetectionPage() {
                   step="0.01"
                   value={ruleConfig.cpu_node_ratio_threshold}
                   onChange={(e) => setRuleConfig({ ...ruleConfig, cpu_node_ratio_threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                 />
               </div>
               <div>
@@ -554,10 +565,10 @@ export function AnomalyDetectionPage() {
               <div
                 className={`mt-4 rounded-lg border px-4 py-3 text-sm font-medium ${
                   configMessageType === 'success'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    ? 'border-blue-200 bg-blue-100 text-blue-700'
                     : configMessageType === 'error'
                       ? 'border-red-200 bg-red-50 text-red-700'
-                      : 'border-blue-200 bg-blue-50 text-blue-700'
+                      : 'border-blue-200 bg-blue-100 text-blue-700'
                 }`}
               >
                 {configMessage}
@@ -571,19 +582,22 @@ export function AnomalyDetectionPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-700 mb-1 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-indigo-600" />
+                <Layers className="w-5 h-5 text-blue-600" />
                 Saved Configurations For This Application
               </h2>
               <p className="text-sm text-slate-500">Endpoint + container mapping and anomaly counts grouped by each saved configuration.</p>
             </div>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-sky-50">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              <span className="text-sm text-indigo-700 font-medium">Live from database</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-emerald-50">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-blue-700 font-medium">Live from database</span>
             </div>
           </div>
 
           {isLoadingSummaries ? (
-            <p className="text-sm text-slate-600">Loading saved configurations...</p>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+              <span>Loading saved configurations...</span>
+            </div>
           ) : summaryError ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
               {summaryError}
@@ -607,26 +621,26 @@ export function AnomalyDetectionPage() {
                   return (
                 <div
                   key={summary.config_id}
-                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-indigo-50/40 to-sky-50/60 p-6 min-h-[220px] flex flex-col justify-between shadow-sm transition-all hover:shadow-md"
+                  className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-blue-50/40 to-emerald-50/60 p-6 min-h-[220px] flex flex-col justify-between shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-slate-500">Endpoint</p>
-                      <h3 className="text-base font-bold text-slate-800 break-all">{summary.endpoint_name}</h3>
+                      <h3 className="text-base font-bold text-blue-900 break-all">{summary.endpoint_name}</h3>
                       <p className="text-xs text-slate-600 mt-1">Container: {summary.container_name}</p>
                     </div>
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        summary.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'
+                        summary.is_active ? 'bg-blue-200 text-blue-900' : 'bg-slate-200 text-slate-700'
                       }`}
                     >
                       {summary.is_active ? 'Active' : 'Disabled'}
                     </span>
                   </div>
 
-                  <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-4">
-                    <p className="text-xs text-indigo-700 font-medium">Anomalies found for this configuration</p>
-                    <p className="text-3xl font-bold text-indigo-700">{summary.anomaly_count}</p>
+                  <div className="mb-4 rounded-xl border border-blue-200 bg-blue-100/70 px-4 py-4">
+                    <p className="text-xs text-blue-700 font-medium">Anomalies found for this configuration</p>
+                    <p className="text-3xl font-bold text-blue-700">{summary.anomaly_count}</p>
                   </div>
 
                   <div className="mb-4 rounded-xl border border-slate-200 bg-white/80 px-4 py-3">
@@ -639,7 +653,7 @@ export function AnomalyDetectionPage() {
                       </span>
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          cooldown.isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                          cooldown.isReady ? 'bg-blue-200 text-blue-900' : 'bg-amber-100 text-amber-700'
                         }`}
                       >
                         {cooldown.isReady ? 'Ready' : 'Not enough data'}
@@ -647,8 +661,13 @@ export function AnomalyDetectionPage() {
                     </div>
                     <button
                       type="button"
+                      disabled={!cooldown.isReady}
                       onClick={() => void handleViewModelsClick(summary)}
-                      className="mt-3 inline-flex items-center justify-center h-10 px-4 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm"
+                      className={`mt-3 inline-flex items-center justify-center h-10 px-4 rounded-lg text-sm font-medium transition shadow-sm ${
+                        !cooldown.isReady 
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                          : 'bg-slate-900 text-white hover:bg-slate-800'
+                      }`}
                     >
                       View Available Models
                     </button>
@@ -671,16 +690,18 @@ export function AnomalyDetectionPage() {
                           const updated = await res.json();
                           // update local state
                           setConfigSummaries((prev) => prev.map((s) => (s.config_id === updated.id ? { ...s, ml_inference_need: updated.ml_inference_need } : s)));
+                          toast.success(updated.ml_inference_need ? 'ML Training scheduled' : 'ML Training disabled');
                         } catch (err) {
                           // eslint-disable-next-line no-console
                           console.error(err);
+                          toast.error('Failed to update ML training status');
                         }
                       }}
                       // keep sizing consistent with other action buttons
                       disabled={!summary.ml_inference_need && !cooldown.isReady}
                       className={`inline-flex items-center justify-center h-11 px-4 rounded-lg text-sm font-medium transition min-w-[170px] ${
                         summary.ml_inference_need
-                          ? 'bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-600 shadow-sm'
+                          ? 'bg-violet-600 text-white hover:bg-slate-800 border border-violet-600 shadow-sm'
                           : cooldown.isReady
                             ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
                             : 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
@@ -689,12 +710,23 @@ export function AnomalyDetectionPage() {
                       {trainingButtonLabel}
                     </button>
 
-                    <Link
-                      to={`/anomaly-flags/${appId}/${summary.config_id}`}
-                      className="inline-flex items-center justify-center h-11 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition min-w-[120px]"
-                    >
-                      View Flags
-                    </Link>
+                    {!cooldown.isReady ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center justify-center h-11 px-4 bg-slate-200 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed min-w-[120px]"
+                      >
+                        View Flags
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/anomaly-flags/${appId}/${summary.config_id}`}
+                        state={{ endpointName: summary.endpoint_name }}
+                        className="inline-flex items-center justify-center h-11 px-4 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition min-w-[120px]"
+                      >
+                        View Flags
+                      </Link>
+                    )}
 
                     <button
                       onClick={() => handleEditConfigClick(summary)}
@@ -715,7 +747,7 @@ export function AnomalyDetectionPage() {
       {isModelsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8">
           <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50 px-6 py-5">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-5">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Available Models</p>
                 <h3 className="mt-1 text-xl font-semibold text-slate-900">
@@ -742,14 +774,17 @@ export function AnomalyDetectionPage() {
 
             <div className="max-h-[70vh] overflow-auto p-6">
               {isLoadingModels ? (
-                <p className="text-sm text-slate-600">Loading model metrics...</p>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span>Loading model metrics...</span>
+                </div>
               ) : modelsError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                   {modelsError}
                 </div>
               ) : selectedConfigModels.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
-                  <p className="font-semibold text-slate-800">No model metrics found</p>
+                  <p className="font-semibold text-blue-900">No model metrics found</p>
                   <p className="mt-1 text-sm text-slate-500">Train or promote a model for this config to see its metrics here.</p>
                 </div>
               ) : (
@@ -768,7 +803,7 @@ export function AnomalyDetectionPage() {
                       <div
                         key={model.id}
                         className={`grid grid-cols-[1.1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] gap-0 px-4 py-4 text-sm ${
-                          model.is_promoted ? 'bg-emerald-50/70' : ''
+                          model.is_promoted ? 'bg-blue-100/70' : ''
                         }`}
                       >
                         <div>

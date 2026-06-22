@@ -1,5 +1,5 @@
 import { ArrowLeft, BarChart3, CheckCircle2, Github, Shield, TestTube, Server } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Testing-Environment-';
 
@@ -10,12 +10,12 @@ export function SetupTestingEnvironmentPage() {
         <div className="flex items-center justify-between gap-4 mb-10">
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to get started
           </Link>
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
             <TestTube className="w-4 h-4" />
             Setup testing environment
           </div>
@@ -44,7 +44,7 @@ export function SetupTestingEnvironmentPage() {
                 'Save the application and continue with your testing flow.',
               ].map((step, index) => (
                 <div key={step} className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm font-semibold text-white">
                     {index + 1}
                   </div>
                   <div>
@@ -57,7 +57,7 @@ export function SetupTestingEnvironmentPage() {
           </section>
 
           <aside className="space-y-6 lg:sticky lg:top-8">
-            <div className="bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-3xl p-8 text-white shadow-2xl shadow-indigo-100">
+            <div className="bg-blue-900 rounded-3xl p-8 text-white shadow-2xl shadow-blue-200/40">
               <h2 className="text-2xl font-semibold mb-3">What you need ready</h2>
               <div className="space-y-4 text-white/90">
                 {[
@@ -76,7 +76,7 @@ export function SetupTestingEnvironmentPage() {
 
             <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl shadow-slate-200/60">
               <div className="flex items-center gap-3 mb-4">
-                <Server className="w-5 h-5 text-indigo-600" />
+                <Server className="w-5 h-5 text-blue-600" />
                 <h2 className="text-xl font-semibold text-slate-900">Quick reminder</h2>
               </div>
               <p className="text-slate-600 mb-4">

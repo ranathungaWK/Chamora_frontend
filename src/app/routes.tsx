@@ -1,10 +1,13 @@
-import { createBrowserRouter } from "react-router";
+/** @jsxRuntime classic */
+import React from "react";
+import { createBrowserRouter } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { UserDashboard } from "./pages/UserDashboard";
 import { ApplicationDashboard } from "./pages/ApplicationDashboard";
 import { AnomalyDetectionPage } from "./pages/AnomalyDetectionPage";
 import { AnomalyFlagsPage } from "./pages/AnomalyFlagsPage";
+import { RootCauseAnalysisPage } from "./pages/RootCauseAnalysisPage";
 import { TestCycleComparisonPage } from "./pages/TestCycleComparisonPage";
 import { ComparisonResultsPage } from "./pages/ComparisonResultsPage";
 import { AutomatedTestingPage } from "./pages/AutomatedTestingPage";
@@ -36,6 +39,10 @@ export const router = createBrowserRouter([
   {
     path: "/anomaly-detection/:appId",
     element: <AnomalyDetectionPage />,
+  },
+  {
+    path: "/anomaly-flags/:appId/:configId/:anomalyId/root-cause",
+    element: <RootCauseAnalysisPage />,
   },
   {
     path: "/anomaly-flags/:appId/:configId",
