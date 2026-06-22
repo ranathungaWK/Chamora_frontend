@@ -23,6 +23,7 @@ export function UserDashboard() {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [applications, setApplications] = useState<UserApplication[]>([]);
   const [appHealthStatuses, setAppHealthStatuses] = useState<Record<number, 'active' | 'inactive' | 'loading'>>({});
+  const [appMonitoringStatuses, setAppMonitoringStatuses] = useState<Record<number, { status: 'connected' | 'failed' | 'pending' | 'loading'; message: string }>>({});
   const [isLoadingApps, setIsLoadingApps] = useState(true);
   const [appsError, setAppsError] = useState('');
 
@@ -56,13 +57,19 @@ export function UserDashboard() {
         const data = (await response.json()) as UserApplication[];
         setApplications(data);
 
-        // Initialize health statuses as loading
+        // Initialize health and monitoring statuses as loading
         const initialHealth: Record<number, 'active' | 'inactive' | 'loading'> = {};
-        data.forEach(app => { initialHealth[app.id] = 'loading'; });
+        const initialMonitoring: Record<number, { status: 'connected' | 'failed' | 'pending' | 'loading'; message: string }> = {};
+        data.forEach(app => {
+          initialHealth[app.id] = 'loading';
+          initialMonitoring[app.id] = { status: 'loading', message: 'Checking monitoring...' };
+        });
         setAppHealthStatuses(initialHealth);
+        setAppMonitoringStatuses(initialMonitoring);
 
-        // Fetch health status for each application
+        // Fetch health and monitoring status for each application
         data.forEach(async (app) => {
+          // Health check
           try {
             const healthRes = await fetch(buildApiUrl(`/api/v1/application/${app.id}/health-check`), {
               headers: { Authorization: `Bearer ${token}` }
@@ -71,6 +78,20 @@ export function UserDashboard() {
             setAppHealthStatuses(prev => ({ ...prev, [app.id]: healthData.status }));
           } catch (error) {
             setAppHealthStatuses(prev => ({ ...prev, [app.id]: 'inactive' }));
+          }
+
+          // Monitoring status check
+          try {
+            const monitoringRes = await fetch(buildApiUrl(`/api/v1/application/${app.id}/monitoring-status`), {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const monitoringData = await monitoringRes.json();
+            setAppMonitoringStatuses(prev => ({ ...prev, [app.id]: monitoringData }));
+          } catch (error) {
+            setAppMonitoringStatuses(prev => ({
+              ...prev,
+              [app.id]: { status: 'failed', message: 'Monitoring Failed' }
+            }));
           }
         });
       } catch (error) {
@@ -233,8 +254,26 @@ export function UserDashboard() {
                       <span>{app.endpoints?.length ?? 0} Endpoints</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Server className="w-4 h-4 text-blue-600" />
-                      <span>{app.grafana_url ? 'Monitoring Connected' : 'Monitoring Pending'}</span>
+                      {appMonitoringStatuses[app.id]?.status === 'loading' ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      ) : (
+                        <Server className={`w-4 h-4 ${
+                          appMonitoringStatuses[app.id]?.status === 'connected'
+                            ? 'text-emerald-600'
+                            : appMonitoringStatuses[app.id]?.status === 'failed'
+                            ? 'text-red-500'
+                            : 'text-slate-400'
+                        }`} />
+                      )}
+                      <span className={
+                        appMonitoringStatuses[app.id]?.status === 'connected'
+                          ? 'text-emerald-700 font-medium'
+                          : appMonitoringStatuses[app.id]?.status === 'failed'
+                          ? 'text-red-600 font-medium'
+                          : 'text-slate-600'
+                      }>
+                        {appMonitoringStatuses[app.id]?.message || 'Monitoring Pending'}
+                      </span>
                     </div>
                   </div>
                 </div>
