@@ -393,6 +393,15 @@ export function ApplicationDashboard() {
         {/* Testing Environment Info card removed per request */}
       </div>
 
+      {/* Floating Generate Report Button */}
+      <Link
+        to={`/report/${appId}`}
+        className="fixed bottom-28 right-6 w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-xl hover:shadow-emerald-500/50 hover:scale-110 transition-all flex items-center justify-center group"
+        title="Generate Report"
+      >
+        <FileText className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
+      </Link>
+
       {/* Floating Chatbot Icon */}
       <Link
         to={`/chatbot/${appId}`}

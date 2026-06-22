@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (path: string) => path.replace(/^\/compare-service/, ''),
         },
         '/recommendation-service': {
-          target: env.VITE_RECOMMENDATION_SERVICE_URL || 'http://localhost:8010',
+          target: env.VITE_RECOMMENDATION_SERVICE_URL || proxyTarget,
           changeOrigin: true,
           rewrite: (path: string) => path.replace(/^\/recommendation-service/, ''),
         },
