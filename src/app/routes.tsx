@@ -14,6 +14,7 @@ import { AutomatedTestingPage } from "./pages/AutomatedTestingPage";
 import { OnboardingPage } from "./components/OnboardingPage";
 import { ChatbotPage } from "./components/ChatbotPage";
 import { SetupTestingEnvironmentPage } from "./pages/SetupTestingEnvironmentPage";
+import { ReportPage } from "./pages/ReportPage";
 
 export const router = createBrowserRouter([
   {
@@ -71,5 +72,9 @@ export const router = createBrowserRouter([
   {
     path: "/chatbot/:appId",
     element: <ChatbotPage />,
+  },
+  {
+    path: "/report/:appId",
+    element: <ReportPage />,
   },
 ]);
