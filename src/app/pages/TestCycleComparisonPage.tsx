@@ -143,6 +143,12 @@ export function TestCycleComparisonPage() {
   // --- Derived state ---
   const isThresholdMode = selectedCycleIds.length === 1;
 
+  // Only completed cycles are selectable/comparable.
+  const completedCycles = useMemo(
+    () => cycles.filter((c) => c.status === 'completed' || c.status === 'passed'),
+    [cycles],
+  );
+
   const selectedCycles = useMemo(
     () => cycles.filter((c) => selectedCycleIds.includes(c.id)),
     [cycles, selectedCycleIds],
@@ -341,7 +347,7 @@ export function TestCycleComparisonPage() {
           </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg">
             <BarChart3 className="w-4 h-4 text-slate-600" />
-            <span className="text-slate-700 font-medium">{cycles.length} Test Cycles</span>
+            <span className="text-slate-700 font-medium">{completedCycles.length} Test Cycles</span>
           </div>
         </div>
       </nav>
@@ -376,18 +382,18 @@ export function TestCycleComparisonPage() {
                 </div>
               </div>
 
-              {cycles.length === 0 ? (
+              {completedCycles.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 py-10 text-center">
                   <BarChart3 className="w-8 h-8 text-slate-300" />
-                  <p className="text-sm text-slate-500">No test cycles found for this application.</p>
+                  <p className="text-sm text-slate-500">No completed test cycles found for this application.</p>
                   <p className="text-xs text-slate-400">Run a test to create your first cycle.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {cycles.map((cycle, index) => {
+                  {completedCycles.map((cycle, index) => {
                     const isSelected = selectedCycleIds.includes(cycle.id);
                     const isNewest = index === 0;
-                    const isPassed = cycle.status === 'passed';
+                    const isPassed = cycle.status === 'passed' || cycle.status === 'completed';
                     return (
                       <div
                         key={cycle.id}

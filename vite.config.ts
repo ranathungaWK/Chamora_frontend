@@ -19,7 +19,7 @@ function figmaAssetResolver() {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://localhost:8000'
-  const compareServiceTarget = env.VITE_COMPARE_SERVICE_URL || 'http://localhost:8020'
+  const compareServiceTarget = env.VITE_COMPARE_SERVICE_URL || 'http://localhost:8030'
 
   return {
     plugins: [
@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => {
           target: compareServiceTarget,
           changeOrigin: true,
           rewrite: (path: string) => path.replace(/^\/compare-service/, ''),
+        },
+        '/recommendation-service': {
+          target: env.VITE_RECOMMENDATION_SERVICE_URL || 'http://localhost:8010',
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(/^\/recommendation-service/, ''),
         },
       },
     },

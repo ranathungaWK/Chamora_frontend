@@ -1,6 +1,8 @@
-import { Activity, Send } from 'lucide-react';
-import { useState } from 'react';
+import { Activity, Send, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
+import { sendChatMessage, fetchChatMessages, fetchChatSessions } from '@/app/services/recommendationApi';
+import type { ChatMessageItem } from '@/app/services/recommendationApi';
 
 interface ComparisonChatState {
   applicationName: string;
@@ -22,36 +24,76 @@ interface ChatbotPageProps {
   onBackToDashboard?: () => void;
 }
 
+interface DisplayMessage {
+  type: 'user' | 'bot';
+  content: string;
+  details?: string | undefined;
+}
+
+function toDisplayMessage(item: ChatMessageItem): DisplayMessage {
+  return {
+    type: item.type === 'user' ? 'user' : 'bot',
+    content: item.content,
+    details: item.details ?? undefined,
+  };
+}
+
 export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
-  const { appId } = useParams();
+  const { appId } = useParams<{ appId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const comparisonContext = location.state as ComparisonChatState | undefined;
   const comparisonMode = comparisonContext?.mode === 'test_comparison';
-  const initialMessages = comparisonMode
-    ? [
-        {
-          type: 'bot',
-          content: 'Comparison context loaded',
-          details: `Ready to analyze ${comparisonContext.selectedCycles.length} selected test runs for ${comparisonContext.applicationName}. Pick a question below or type your own follow-up.`,
-        },
-      ]
-    : [
-        {
-          type: 'bot',
-          content: 'Welcome to Chamora',
-          details: 'I\'m your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more.'
-        }
-      ];
+
+  const welcomeMessage: DisplayMessage = comparisonMode
+    ? {
+        type: 'bot',
+        content: 'Comparison context loaded',
+        details: `Ready to analyze ${comparisonContext!.selectedCycles.length} selected test runs for ${comparisonContext!.applicationName}. Pick a question below or type your own follow-up.`,
+      }
+    : {
+        type: 'bot',
+        content: 'Welcome to Chamora',
+        details:
+          "I'm your AI-powered assistant designed to help you with application performance analysis and provide intelligent recommendations, resolve edge case testing issues, optimize testing workflows, and much more.",
+      };
+
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<DisplayMessage[]>(() => [welcomeMessage]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [currentMode, setCurrentMode] = useState('Advisory');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load the most recent session's messages for this app on mount
+  useEffect(() => {
+    if (!appId) return;
+    fetchChatSessions(appId)
+      .then((sessions) => {
+        if (sessions.length === 0) return;
+        const latest = sessions[0];
+        setSessionId(latest.id);
+        return fetchChatMessages(latest.id).then((items) => {
+          if (items.length > 0) {
+            setMessages(items.map(toDisplayMessage));
+          }
+        });
+      })
+      .catch(() => {
+        // silently fall back to welcome message if history unavailable
+      });
+  }, [appId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const suggestedQuestions = comparisonMode
     ? [
         'Which selected cycle regressed the most?',
         'Summarize the biggest performance differences across the chosen metrics.',
         'What should I inspect first in these comparison results?',
-        'Turn this comparison into an executive summary.'
+        'Turn this comparison into an executive summary.',
       ]
     : [
         'How do I improve test coverage?',
@@ -68,27 +110,56 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
         'Use Pytest fixtures and mock objects to improve HTTP requests',
         'Implement load balancing to distribute traffic evenly and improve responsiveness',
         'Optimize front-end performance through minification, bundling, and lazy loading',
-        'Memory usage and garbage collection frequency'
+        'Memory usage and garbage collection frequency',
       ];
 
-  const handleSend = () => {
-    if (message.trim()) {
-      setMessages([...messages, { type: 'user', content: message }]);
-      setMessage('');
-      // Simulate bot response
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
+  const handleSend = async () => {
+    const text = message.trim();
+    if (!text || isSending || !appId) return;
+
+    setMessages((prev) => [...prev, { type: 'user', content: text, details: undefined }]);
+    setMessage('');
+    setIsSending(true);
+
+    try {
+      const response = await sendChatMessage({
+        app_id: appId,
+        question: text,
+        session_id: sessionId ?? undefined,
+      });
+
+      if (response.session_id) {
+        setSessionId(response.session_id);
+      }
+      setCurrentMode(
+        response.mode === 'test_comparison'
+          ? 'Comparison'
+          : response.mode === 'anomaly'
+          ? 'Diagnostic'
+          : 'Advisory',
+      );
+      setMessages((prev) => [
+        ...prev,
+        { type: 'bot', content: response.answer, details: undefined },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
           type: 'bot',
-          content: 'I\'m processing your request. This is a demo response to show the chat functionality.'
-        }]);
-      }, 1000);
+          content: 'Error',
+          details: err instanceof Error ? err.message : 'Failed to get a response. Please try again.',
+        },
+      ]);
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
@@ -121,7 +192,7 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
           </div>
           <div className="flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl shadow-sm">
             <span className="text-sm text-slate-700 font-medium">Current Mode:</span>
-            <span className="font-bold text-indigo-700">Advisory</span>
+            <span className="font-bold text-indigo-700">{currentMode}</span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               <span className="text-xs text-emerald-600 font-semibold">Active</span>
@@ -178,17 +249,19 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
               <div className="max-w-5xl mx-auto space-y-6">
                 {messages.map((msg, index) => (
                   <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-3xl ${
-                      msg.type === 'user'
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-5 shadow-md'
-                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-sm'
-                    }`}>
+                    <div
+                      className={`max-w-3xl ${
+                        msg.type === 'user'
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-5 shadow-md'
+                          : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-sm'
+                      }`}
+                    >
                       {msg.type === 'bot' && (
                         <div>
                           <h3 className="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-3">
                             {msg.content}
                           </h3>
-                          {msg.details && <p className="text-slate-700 leading-relaxed">{msg.details}</p>}
+                          {msg.details && <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.details}</p>}
                         </div>
                       )}
                       {msg.type === 'user' && <p className="text-white">{msg.content}</p>}
@@ -196,8 +269,18 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
                   </div>
                 ))}
 
-                {/* Suggested Questions */}
-                {messages.length <= 1 && (
+                {/* Typing indicator */}
+                {isSending && (
+                  <div className="flex justify-start">
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 shadow-sm flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                      <span className="text-sm text-slate-600">Thinking...</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggested Questions — shown only before any user message */}
+                {messages.filter((m) => m.type === 'user').length === 0 && !isSending && (
                   <div className="mt-8">
                     <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200 rounded-2xl p-6 shadow-lg">
                       <div className="flex items-center gap-3 mb-5">
@@ -227,6 +310,8 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
                     </div>
                   </div>
                 )}
+
+                <div ref={messagesEndRef} />
               </div>
             </div>
 
@@ -240,17 +325,18 @@ export function ChatbotPage({ onBackToDashboard }: ChatbotPageProps) {
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Send a message (Shift+Enter for new line)"
-                      className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-xl px-5 py-4 text-slate-800 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 resize-none shadow-sm transition-all"
+                      disabled={isSending}
+                      className="w-full bg-white border-2 border-slate-300 focus:border-indigo-400 rounded-xl px-5 py-4 text-slate-800 placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 resize-none shadow-sm transition-all disabled:opacity-60"
                       rows={1}
                       style={{ minHeight: '56px', maxHeight: '150px' }}
                     />
                   </div>
                   <button
-                    onClick={handleSend}
-                    disabled={!message.trim()}
+                    onClick={() => void handleSend()}
+                    disabled={!message.trim() || isSending}
                     className="flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:from-slate-300 disabled:to-slate-400 text-white px-6 py-4 rounded-xl transition-all shadow-md hover:shadow-xl disabled:cursor-not-allowed disabled:shadow-none hover:scale-105 active:scale-95"
                   >
-                    <Send className="w-6 h-6" />
+                    {isSending ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                   </button>
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-4">

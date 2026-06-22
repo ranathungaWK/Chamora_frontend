@@ -11,7 +11,7 @@ export interface TestCycle {
   test_script_id: number;
   script_name: string | null;
   application_id: number | null;
-  status: 'running' | 'passed' | 'failed' | 'aborted';
+  status: 'running' | 'passed' | 'completed' | 'failed' | 'aborted';
   start_time: string;
   end_time: string | null;
   duration_seconds: number | null;
