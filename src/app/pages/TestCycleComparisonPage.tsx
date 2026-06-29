@@ -293,7 +293,7 @@ export function TestCycleComparisonPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-slate-600">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           <p className="text-sm font-medium">Loading test cycles…</p>
         </div>
       </div>
@@ -310,7 +310,7 @@ export function TestCycleComparisonPage() {
           <p className="text-sm text-slate-600 mb-5">{loadError}</p>
           <Button
             onClick={() => void loadData()}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 px-5 py-2.5 text-white"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 px-5 py-2.5 text-white hover:from-blue-700 hover:to-blue-900 transition-all font-semibold"
           >
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -334,11 +334,11 @@ export function TestCycleComparisonPage() {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
                   Test Cycle Comparison
                 </h1>
                 <p className="text-xs text-slate-500">Application #{appId}</p>
@@ -368,7 +368,7 @@ export function TestCycleComparisonPage() {
             <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between gap-4 mb-5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-600">Step 1</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Step 1</p>
                   <h2 className="text-xl font-bold text-slate-800 mt-1">Select test cycles</h2>
                   <p className="text-sm text-slate-500 mt-1">
                     Pick 2–4 cycles to compare, or 1 cycle for threshold validation.
@@ -407,7 +407,7 @@ export function TestCycleComparisonPage() {
                           }
                         }}
                         className={`cursor-pointer rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                          isSelected ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white'
+                          isSelected ? 'border-blue-400 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -464,7 +464,7 @@ export function TestCycleComparisonPage() {
             <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between gap-4 mb-5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-600">Step 2</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">Step 2</p>
                   <h2 className="text-xl font-bold text-slate-800 mt-1">Select metrics</h2>
                   <p className="text-sm text-slate-500 mt-1">Choose up to 10 metrics from the live catalog.</p>
                 </div>
@@ -508,7 +508,7 @@ export function TestCycleComparisonPage() {
                     return (
                       <div key={category}>
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700">
                             <Icon className="w-3.5 h-3.5 text-white" />
                           </div>
                           <h3 className="text-sm font-semibold text-slate-700">{category}</h3>
@@ -525,7 +525,7 @@ export function TestCycleComparisonPage() {
                                 type="button"
                                 onClick={() => toggleMetric(metric.key)}
                                 className={`w-full rounded-xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm ${
-                                  isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white'
+                                  isSelected ? 'border-blue-400 bg-blue-50/50' : 'border-slate-200 bg-white'
                                 }`}
                               >
                                 <div className="flex items-center justify-between gap-2">
@@ -536,7 +536,7 @@ export function TestCycleComparisonPage() {
                                     </p>
                                   </div>
                                   {isSelected && (
-                                    <span className="shrink-0 rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                                    <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white">
                                       ✓
                                     </span>
                                   )}
@@ -588,7 +588,7 @@ export function TestCycleComparisonPage() {
                     {selectedMetrics.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {selectedMetrics.map((m) => (
-                          <span key={m.key} className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                          <span key={m.key} className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                             {m.label}
                           </span>
                         ))}
@@ -644,7 +644,7 @@ export function TestCycleComparisonPage() {
                           onChange={(e) =>
                             setThresholdValues((prev) => ({ ...prev, [metric.key]: e.target.value }))
                           }
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                           placeholder={metric.higher_is_worse ? `Max ${metric.unit}` : `Min ${metric.unit}`}
                         />
                       </div>
@@ -657,7 +657,7 @@ export function TestCycleComparisonPage() {
                   type="button"
                   onClick={isThresholdMode ? () => void handleThresholdCheck() : () => void handleCompare()}
                   disabled={isThresholdMode ? !canThresholdCheck || isComparing : !canCompare || isComparing}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 px-5 py-3 text-white shadow-md transition-all hover:from-indigo-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-400"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 px-5 py-3 text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-900 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-400"
                 >
                   {isComparing ? (
                     <>

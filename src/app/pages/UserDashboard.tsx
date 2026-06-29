@@ -26,6 +26,7 @@ export function UserDashboard() {
   const [appMonitoringStatuses, setAppMonitoringStatuses] = useState<Record<number, { status: 'connected' | 'failed' | 'pending' | 'loading'; message: string }>>({});
   const [isLoadingApps, setIsLoadingApps] = useState(true);
   const [appsError, setAppsError] = useState('');
+  const [totalTestCycles, setTotalTestCycles] = useState<number>(0);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -56,6 +57,7 @@ export function UserDashboard() {
 
         const data = (await response.json()) as UserApplication[];
         setApplications(data);
+        setTotalTestCycles(0);
 
         // Initialize health and monitoring statuses as loading
         const initialHealth: Record<number, 'active' | 'inactive' | 'loading'> = {};
@@ -92,6 +94,22 @@ export function UserDashboard() {
               ...prev,
               [app.id]: { status: 'failed', message: 'Monitoring Failed' }
             }));
+          }
+
+          // Fetch test cycles count
+          try {
+            const cyclesRes = await fetch(buildApiUrl(`/api/v1/test-cycles?application_id=${app.id}`), {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (cyclesRes.ok) {
+              const cyclesData = (await cyclesRes.json()) as Array<{ status: string }>;
+              const completedCount = cyclesData.filter(
+                (c) => c.status === 'completed' || c.status === 'passed'
+              ).length;
+              setTotalTestCycles(prev => prev + completedCount);
+            }
+          } catch (error) {
+            // ignore
           }
         });
       } catch (error) {
@@ -188,7 +206,7 @@ export function UserDashboard() {
                 <p className="text-sm text-slate-600">Total Test Cycles</p>
                 <TestTube className="w-5 h-5 text-blue-600" />
               </div>
-              <p className="text-3xl font-bold text-blue-900">0</p>
+              <p className="text-3xl font-bold text-blue-900">{totalTestCycles}</p>
             </div>
 
           </div>

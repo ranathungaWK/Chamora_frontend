@@ -33,6 +33,8 @@ export function ApplicationDashboard() {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(true);
   const [documentsError, setDocumentsError] = useState('');
   const [deletingDocumentId, setDeletingDocumentId] = useState<number | null>(null);
+  const [cyclesCount, setCyclesCount] = useState<number | null>(null);
+  const [isLoadingCycles, setIsLoadingCycles] = useState(true);
 
   const loadDocuments = async () => {
     const token = localStorage.getItem('access_token');
@@ -102,23 +104,31 @@ export function ApplicationDashboard() {
     const token = localStorage.getItem('access_token');
     if (!token || !appId) {
       setIsLoadingConfig(false);
+      setIsLoadingCycles(false);
       setConfiguredEndpointCount(0);
       setIsLoadingDocuments(false);
+      setCyclesCount(0);
       return;
     }
 
     const loadConfigStatus = async () => {
       setIsLoadingConfig(true);
+      setIsLoadingCycles(true);
       setConfigError('');
 
       try {
-        const [appsResponse, configsResponse] = await Promise.all([
+        const [appsResponse, configsResponse, cyclesResponse] = await Promise.all([
           fetch(buildApiUrl('/api/v1/application/me'), {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }),
           fetch(buildApiUrl('/api/v1/anomaly-configs/'), {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch(buildApiUrl(`/api/v1/test-cycles?application_id=${appId}`), {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -146,11 +156,23 @@ export function ApplicationDashboard() {
 
         const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
         setConfiguredEndpointCount(appConfigCount);
+
+        if (cyclesResponse.ok) {
+          const cyclesList = (await cyclesResponse.json()) as Array<{ status: string }>;
+          const completedCount = cyclesList.filter(
+            (c) => c.status === 'completed' || c.status === 'passed'
+          ).length;
+          setCyclesCount(completedCount);
+        } else {
+          setCyclesCount(0);
+        }
       } catch (error) {
-        setConfigError(error instanceof Error ? error.message : 'Failed to load anomaly configurations');
+        setConfigError(error instanceof Error ? error.message : 'Failed to load configurations');
         setConfiguredEndpointCount(0);
+        setCyclesCount(0);
       } finally {
         setIsLoadingConfig(false);
+        setIsLoadingCycles(false);
       }
 
       try {
@@ -297,11 +319,22 @@ export function ApplicationDashboard() {
                 <p className="text-sm font-medium text-slate-600">Available Test Cycles</p>
                 <TrendingUp className="w-5 h-5 text-blue-600" />
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-blue-600">5</span>
-                <span className="text-lg text-slate-600">cycles</span>
-              </div>
-              <p className="text-sm text-blue-700 mt-2 font-medium">✓ Ready for comparison</p>
+              {isLoadingCycles ? (
+                <div className="flex items-center gap-2 py-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <p className="text-xs text-slate-500">Loading cycles...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-blue-600">{cyclesCount ?? 0}</span>
+                    <span className="text-lg text-slate-600">cycles</span>
+                  </div>
+                  <p className="text-sm text-blue-700 mt-2 font-medium">
+                    {(cyclesCount ?? 0) >= 1 ? '✓ Ready for comparison' : 'No completed cycles available'}
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Compare Button */}

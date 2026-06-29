@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildApiUrl } from '../api';
 
-const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Testing-Environment-';
+const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Automated-Testing-Environment-';
 
 function getErrorMessage(detail: unknown, fallback: string) {
   if (typeof detail === 'string') {
