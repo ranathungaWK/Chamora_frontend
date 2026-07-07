@@ -20,7 +20,7 @@ import {
   CheckCircle2,
   ListCollapse
 } from 'lucide-react';
-import readmeContent from '../../../../README.md?raw';
+import readmeContent from './monitoring-environment-README.md?raw';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Automated-Testing-Environment-';
 
