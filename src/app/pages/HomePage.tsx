@@ -23,7 +23,7 @@ export function HomePage() {
               Login
             </Link>
             <Link
-              to="/login"
+              to="/login?mode=signup"
               className="px-6 py-2.5 bg-blue-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md hover:shadow-lg font-medium"
             >
               Get Started
@@ -53,7 +53,7 @@ export function HomePage() {
             <div className="max-w-2xl bg-white border border-slate-200 rounded-2xl p-5 shadow-xl shadow-slate-200/60">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Link
-                  to="/login"
+                  to="/login?mode=signup"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-slate-800 bg-blue-400 text-blue-900 hover:bg-blue-500 hover:text-white font-bold shadow-lg shadow-blue-200 transition-all"
                 >
                   Get Started
@@ -139,7 +139,7 @@ export function HomePage() {
             Get a focused start screen, then move into the get-started page to clone the environment and continue setup.
           </p>
           <Link
-            to="/login"
+            to="/login?mode=signup"
             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-blue-700 rounded-xl hover:bg-slate-50 transition-all shadow-lg hover:shadow-xl text-lg font-semibold"
           >
             Get Started Now

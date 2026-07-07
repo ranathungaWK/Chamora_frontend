@@ -1,6 +1,6 @@
 import { Activity, Mail, Lock, ArrowRight, Copy, Github, CheckCircle2, Shield, Server, TestTube } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { buildApiUrl } from '../api';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Automated-Testing-Environment-';
@@ -35,7 +35,13 @@ function getErrorMessage(detail: unknown, fallback: string) {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode !== 'signup');
+
+  useEffect(() => {
+    setIsLogin(mode !== 'signup');
+  }, [mode]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
