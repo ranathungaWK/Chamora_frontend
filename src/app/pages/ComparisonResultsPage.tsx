@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronUp,
   Cpu,
+  Lightbulb,
   Server,
   TrendingDown,
   TrendingUp,
@@ -218,6 +219,97 @@ function MetricRow({
 }
 
 // ---------------------------------------------------------------------------
+// Formatted AI Summary parser
+// ---------------------------------------------------------------------------
+
+function renderFormattedInlineText(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const content = part.slice(2, -2);
+      if (content.includes('_')) {
+        return (
+          <code
+            key={idx}
+            className="mx-0.5 font-mono text-xs font-semibold text-blue-800 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded shadow-2xs"
+          >
+            {content}
+          </code>
+        );
+      }
+      return (
+        <strong key={idx} className="font-semibold text-slate-900">
+          {content}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+function FormattedSummary({ text }: { text: string }) {
+  if (!text) return null;
+
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="space-y-2.5 pt-2">
+      {lines.map((line, idx) => {
+        let cleanLine = line.replace(/^[-*•]\s*/, '').trim();
+
+        const isNextStep = /^(\*\*)?next step/i.test(cleanLine);
+        if (isNextStep) {
+          cleanLine = cleanLine.replace(/^(\*\*)?next step:?(\*\*)?:?\s*/i, '');
+          return (
+            <div
+              key={idx}
+              className="mt-3 flex items-start gap-3 rounded-xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 to-indigo-50/50 p-3.5 text-sm text-slate-800 shadow-xs"
+            >
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+                <Lightbulb className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold text-blue-900 block text-xs uppercase tracking-wider mb-0.5">
+                  Actionable Next Step
+                </span>
+                <div className="text-slate-800 leading-relaxed">{renderFormattedInlineText(cleanLine)}</div>
+              </div>
+            </div>
+          );
+        }
+
+        let BulletIcon = CheckCircle2;
+        let iconColor = 'text-blue-500';
+
+        const isRegression = /regression|violated|exceeded/i.test(cleanLine) && !/no regression/i.test(cleanLine);
+        const isImprovement = /improvement|improved/i.test(cleanLine);
+
+        if (isRegression) {
+          BulletIcon = AlertTriangle;
+          iconColor = 'text-rose-500';
+        } else if (isImprovement) {
+          BulletIcon = TrendingUp;
+          iconColor = 'text-emerald-500';
+        } else {
+          BulletIcon = CheckCircle2;
+          iconColor = 'text-blue-500';
+        }
+
+        return (
+          <div key={idx} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed bg-slate-50/60 p-2.5 rounded-xl border border-slate-100/80">
+            <BulletIcon className={`w-4 h-4 shrink-0 mt-0.5 ${iconColor}`} />
+            <div className="min-w-0 flex-1">{renderFormattedInlineText(cleanLine)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main results page
 // ---------------------------------------------------------------------------
 
@@ -257,19 +349,26 @@ export function ComparisonResultsPage() {
 
   useEffect(() => {
     if (!appId) return;
-    fetch(buildApiUrl('/api/v1/application/me'), {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((apps) => {
-        if (Array.isArray(apps)) {
-          const found = apps.find((a: any) => String(a.id) === String(appId));
-          if (found && found.name) setAppName(found.name);
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || '';
+    Promise.all([
+      fetch(buildApiUrl('/api/v1/application/me'), {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([apps, dash]) => {
+      if (Array.isArray(apps)) {
+        const found = apps.find((a: any) => String(a.id) === String(appId));
+        if (found && found.name) {
+          setAppName(found.name);
+          return;
         }
-      })
-      .catch(() => null);
+      }
+      if (dash && dash.app_name) {
+        setAppName(dash.app_name);
+      }
+    });
   }, [appId]);
 
   // Map cycle_id → human label for column headers
@@ -375,8 +474,12 @@ export function ComparisonResultsPage() {
                   {formatDate(c.start_time)} · {formatDuration(c.duration_seconds)}
                 </p>
                 {sc && (
-                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    sc.status === 'passed' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                  <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    sc.status === 'passed'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : sc.status === 'failed'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200/80'
                   }`}>
                     {sc.status}
                   </span>
@@ -388,18 +491,18 @@ export function ComparisonResultsPage() {
 
         {/* ---- LLM / fallback summary ---- */}
         {summaryText && (
-          <div className="rounded-2xl border border-indigo-200 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-blue-200/80 bg-white shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={() => setSummaryExpanded((v) => !v)}
               className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-50/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-xs">
                   <BarChart3 className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">AI Analysis</p>
+                  <p className="font-semibold text-slate-900 text-sm">AI Analysis</p>
                   <p className="text-xs text-slate-500">
                     {result.summary?.source === 'llm'
                       ? `Generated by ${result.summary.model ?? 'LLM'}`
@@ -412,10 +515,8 @@ export function ComparisonResultsPage() {
                 : <ChevronDown className="w-5 h-5 text-slate-400" />}
             </button>
             {summaryExpanded && (
-              <div className="px-6 pb-5 border-t border-indigo-100">
-                <div className="mt-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-[inherit]">
-                  {summaryText}
-                </div>
+              <div className="px-6 pb-5 border-t border-blue-100/80">
+                <FormattedSummary text={summaryText} />
               </div>
             )}
           </div>

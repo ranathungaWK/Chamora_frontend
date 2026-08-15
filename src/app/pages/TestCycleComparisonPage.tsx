@@ -3,8 +3,10 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
+  Check,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Cpu,
   Loader2,
   RefreshCw,
@@ -101,7 +103,8 @@ export function TestCycleComparisonPage() {
       return;
     }
 
-    if (!localStorage.getItem('access_token')) {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || '';
+    if (!token) {
       navigate('/login');
       return;
     }
@@ -111,25 +114,43 @@ export function TestCycleComparisonPage() {
     setCatalogError('');
 
     try {
-      const [cyclesData, endpointsData, appsRes] = await Promise.all([
+      const [cyclesData, endpointsData, appsRes, dashRes] = await Promise.all([
         fetchCycles(applicationId),
         fetchEndpoints(applicationId),
         fetch(buildApiUrl('/api/v1/application/me'), {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${token}`,
+          },
+        }).catch(() => null),
+        fetch(buildApiUrl(`/api/v1/dashboard/${applicationId}`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
         }).catch(() => null),
       ]);
       setCycles(cyclesData);
       setEndpoints(endpointsData);
+
+      let foundName = '';
       if (appsRes && appsRes.ok) {
         const apps = await appsRes.json();
         if (Array.isArray(apps)) {
-          const found = apps.find((a: any) => String(a.id) === String(appId));
+          const found = apps.find(
+            (a: any) => String(a.id) === String(appId) || Number(a.id) === applicationId
+          );
           if (found && found.name) {
-            setAppName(found.name);
+            foundName = found.name;
           }
         }
+      }
+      if (!foundName && dashRes && dashRes.ok) {
+        const dash = await dashRes.json();
+        if (dash && dash.app_name) {
+          foundName = dash.app_name;
+        }
+      }
+      if (foundName) {
+        setAppName(foundName);
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to load cycles or endpoints.';
@@ -409,7 +430,31 @@ export function TestCycleComparisonPage() {
                   {completedCycles.map((cycle, index) => {
                     const isSelected = selectedCycleIds.includes(cycle.id);
                     const isNewest = index === 0;
-                    const isPassed = cycle.status === 'passed' || cycle.status === 'completed';
+                    const statusLower = (cycle.status || '').toLowerCase();
+
+                    // Status styling map: light blue/slate report theme (no dark black)
+                    const statusConfig = statusLower === 'passed'
+                      ? {
+                          boxStyle: 'bg-emerald-600 text-white shadow-xs',
+                          boxIcon: <CheckCircle2 className="w-5 h-5 text-white" />,
+                          badgeStyle: 'bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-medium',
+                          badgeIcon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+                        }
+                      : statusLower === 'failed'
+                      ? {
+                          boxStyle: 'bg-rose-600 text-white shadow-xs',
+                          boxIcon: <XCircle className="w-5 h-5 text-white" />,
+                          badgeStyle: 'bg-rose-50 text-rose-800 border border-rose-200/80 font-medium',
+                          badgeIcon: <XCircle className="w-3.5 h-3.5 text-rose-600" />,
+                        }
+                      : {
+                          // Completed status: Light blue/slate report theme (0% black)
+                          boxStyle: 'bg-blue-50 text-blue-700 border border-blue-200/80',
+                          boxIcon: <CheckCircle2 className="w-5 h-5 text-blue-600" />,
+                          badgeStyle: 'bg-blue-50/90 text-blue-700 border border-blue-200/80 font-medium',
+                          badgeIcon: <Check className="w-3.5 h-3.5 text-blue-600" />,
+                        };
+
                     return (
                       <div
                         key={cycle.id}
@@ -423,19 +468,13 @@ export function TestCycleComparisonPage() {
                           }
                         }}
                         className={`cursor-pointer rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${
-                          isSelected ? 'border-blue-400 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white'
+                          isSelected ? 'border-blue-500 bg-blue-50/40 shadow-sm ring-1 ring-blue-500/20' : 'border-slate-200 bg-white'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                              isPassed
-                                ? 'bg-gradient-to-br from-emerald-500 to-green-600'
-                                : 'bg-gradient-to-br from-red-500 to-orange-600'
-                            }`}>
-                              {isPassed
-                                ? <CheckCircle2 className="w-5 h-5 text-white" />
-                                : <XCircle className="w-5 h-5 text-white" />}
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${statusConfig.boxStyle}`}>
+                              {statusConfig.boxIcon}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -443,7 +482,7 @@ export function TestCycleComparisonPage() {
                                   {cycle.script_name ?? `Cycle #${cycle.id}`}
                                 </h4>
                                 {isNewest && (
-                                  <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                                  <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
                                     Latest
                                   </span>
                                 )}
@@ -462,10 +501,8 @@ export function TestCycleComparisonPage() {
                           </div>
                         </div>
                         <div className="mt-3">
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {isPassed ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusConfig.badgeStyle}`}>
+                            {statusConfig.badgeIcon}
                             {cycle.status}
                           </span>
                         </div>

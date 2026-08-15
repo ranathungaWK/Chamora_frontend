@@ -523,14 +523,40 @@ export function ReportPage() {
   const { appId = "" } = useParams();
   const [anomalies, setAnomalies] = useState<Anomaly[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [appName, setAppName] = useState<string>("");
+
+  useEffect(() => {
+    if (!appId) return;
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
+    Promise.all([
+      fetch(buildApiUrl("/api/v1/application/me"), {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([apps, dash]) => {
+      if (Array.isArray(apps)) {
+        const found = apps.find((a: any) => String(a.id) === String(appId));
+        if (found && found.name) {
+          setAppName(found.name);
+          return;
+        }
+      }
+      if (dash && dash.app_name) {
+        setAppName(dash.app_name);
+      }
+    });
+  }, [appId]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
         const res = await fetch(ANOMALIES_ENDPOINT(appId), {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         if (!res.ok) throw new Error(`Request failed (${res.status})`);
@@ -579,41 +605,37 @@ export function ReportPage() {
           <ArrowLeft className="h-4 w-4" /> Back to dashboard
         </Link>
         <button onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br
-          from-emerald-500 to-teal-600 px-5 py-2 text-sm font-semibold text-white
-          shadow-md transition hover:scale-105 hover:shadow-emerald-500/40">
+          className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-xs transition hover:bg-blue-700">
           <Download className="h-4 w-4" /> Download PDF
         </button>
       </div>
 
       <div id="chamora-report" className="mx-auto max-w-4xl px-6 py-8">
         {/* Header */}
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br
-          from-indigo-600 via-purple-600 to-indigo-700 p-8 text-white shadow-lg">
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-slate-50 border border-blue-200/80 p-8 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 text-sm
-                font-medium text-indigo-200">
-                <FileText className="h-4 w-4" /> Chamora · Performance Report
+              <div className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                <FileText className="h-4 w-4 text-blue-600" /> Chamora · Performance Report
               </div>
-              <h1 className="text-2xl font-bold">Application #{appId}</h1>
-              <p className="mt-1 text-sm text-indigo-200">
+              <h1 className="text-2xl font-bold text-slate-900">{appName || `Application #${appId}`}</h1>
+              <p className="mt-1 text-sm text-slate-600">
                 Detection window: {s.window}
               </p>
             </div>
             <HealthBadge health={s.health} />
           </div>
-          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-indigo-50">
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-slate-700">
             {s.summary}
           </p>
-          <div className="mt-4 text-xs text-indigo-300">
+          <div className="mt-4 text-xs text-slate-500">
             Generated {new Date().toLocaleString()}
           </div>
         </div>
 
         {/* Highlight cards */}
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard icon={Activity} accent="bg-indigo-500"
+          <StatCard icon={Activity} accent="bg-blue-600"
             label="Total detections" value={s.total.toLocaleString()}
             sub="anomaly windows" />
           <StatCard icon={ShieldX} accent="bg-rose-500"
@@ -622,7 +644,7 @@ export function ReportPage() {
           <StatCard icon={ShieldAlert} accent="bg-amber-500"
             label="Warning" value={s.warning.toLocaleString()}
             sub={`${s.total ? Math.round((s.warning / s.total) * 100) : 0}% of detections`} />
-          <StatCard icon={MemoryStick} accent="bg-purple-500"
+          <StatCard icon={MemoryStick} accent="bg-indigo-600"
             label="Peak memory pressure" value={fmtPct(s.peakMemPressure)}
             sub="baseline ≈ 4%" />
         </div>
@@ -710,7 +732,7 @@ export function ReportPage() {
         </section>
 
         <p className="mt-6 text-center text-xs text-slate-400">
-          Chamora — AI Performance Intelligence Engine · Report for Application #{appId}
+          Chamora — AI Performance Intelligence Engine · Report for {appName || `Application #${appId}`}
         </p>
       </div>
     </div>
