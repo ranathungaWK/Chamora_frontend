@@ -19,6 +19,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/app/components/ui/button';
 import { Checkbox } from '@/app/components/ui/checkbox';
+import { buildApiUrl } from '@/app/api';
 import {
   type Endpoint,
   type MetricEntry,
@@ -72,6 +73,7 @@ export function TestCycleComparisonPage() {
   const [cycles, setCycles] = useState<TestCycle[]>([]);
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [metrics, setMetrics] = useState<MetricEntry[]>([]);
+  const [appName, setAppName] = useState<string>('');
 
   // Loading
   const [isLoading, setIsLoading] = useState(true);
@@ -109,12 +111,26 @@ export function TestCycleComparisonPage() {
     setCatalogError('');
 
     try {
-      const [cyclesData, endpointsData] = await Promise.all([
+      const [cyclesData, endpointsData, appsRes] = await Promise.all([
         fetchCycles(applicationId),
         fetchEndpoints(applicationId),
+        fetch(buildApiUrl('/api/v1/application/me'), {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }).catch(() => null),
       ]);
       setCycles(cyclesData);
       setEndpoints(endpointsData);
+      if (appsRes && appsRes.ok) {
+        const apps = await appsRes.json();
+        if (Array.isArray(apps)) {
+          const found = apps.find((a: any) => String(a.id) === String(appId));
+          if (found && found.name) {
+            setAppName(found.name);
+          }
+        }
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to load cycles or endpoints.';
       if (msg.toLowerCase().includes('credential') || msg.includes('401')) {
@@ -341,7 +357,7 @@ export function TestCycleComparisonPage() {
                 <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
                   Test Cycle Comparison
                 </h1>
-                <p className="text-xs text-slate-500">Application #{appId}</p>
+                <p className="text-xs text-slate-500">{appName || `Application #${appId}`}</p>
               </div>
             </div>
           </div>

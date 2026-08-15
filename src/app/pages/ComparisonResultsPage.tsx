@@ -13,8 +13,9 @@ import {
   Wifi,
   XCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { buildApiUrl } from '@/app/api';
 
 import {
   type CompareResult,
@@ -252,6 +253,25 @@ export function ComparisonResultsPage() {
   const { result, selectedCycles, selectedMetrics } = state;
   const isBaseline = result.mode === 'baseline';
 
+  const [appName, setAppName] = useState<string>('');
+
+  useEffect(() => {
+    if (!appId) return;
+    fetch(buildApiUrl('/api/v1/application/me'), {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((apps) => {
+        if (Array.isArray(apps)) {
+          const found = apps.find((a: any) => String(a.id) === String(appId));
+          if (found && found.name) setAppName(found.name);
+        }
+      })
+      .catch(() => null);
+  }, [appId]);
+
   // Map cycle_id → human label for column headers
   const cycleLabelMap = useMemo((): Record<number, string> => {
     const map: Record<number, string> = {};
@@ -293,7 +313,7 @@ export function ComparisonResultsPage() {
                   Comparison Results
                 </h1>
                 <p className="text-xs text-slate-500">
-                  {isBaseline ? 'Baseline comparison' : 'Threshold check'} · Application #{appId}
+                  {isBaseline ? 'Baseline comparison' : 'Threshold check'} · {appName || `Application #${appId}`}
                 </p>
               </div>
             </div>
