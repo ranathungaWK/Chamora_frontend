@@ -199,7 +199,7 @@ export function ApplicationDashboard() {
     try {
       const [appDetailsRes, configsResponse, cyclesResponse] = await Promise.all([
         fetchApplicationDetails(appId).catch(() => null),
-        fetch(buildApiUrl('/api/v1/anomaly-configs'), {
+        fetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -235,15 +235,28 @@ export function ApplicationDashboard() {
       if (configsResponse && configsResponse.ok) {
         const configsContentType = configsResponse.headers.get('content-type') || '';
         if (configsContentType.includes('application/json')) {
-          const allConfigs = (await configsResponse.json()) as AnomalyConfig[];
-          const endpointIds = new Set((appDetailsRes?.endpoints ?? []).map((endpoint) => endpoint.id));
-          const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
-          setConfiguredEndpointCount(appConfigCount);
+          const appConfigs = (await configsResponse.json()) as AnomalyConfigSummaryResponse[];
+          setConfiguredEndpointCount(Array.isArray(appConfigs) ? appConfigs.length : 0);
         } else {
           setConfiguredEndpointCount(0);
         }
       } else {
-        setConfiguredEndpointCount(0);
+        // Fallback to exact trailing slash endpoint /api/v1/anomaly-configs/
+        try {
+          const fallbackRes = await fetch(buildApiUrl('/api/v1/anomaly-configs/'), {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (fallbackRes.ok) {
+            const allConfigs = (await fallbackRes.json()) as AnomalyConfig[];
+            const endpointIds = new Set((appDetailsRes?.endpoints ?? []).map((endpoint) => endpoint.id));
+            const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
+            setConfiguredEndpointCount(appConfigCount);
+          } else {
+            setConfiguredEndpointCount(0);
+          }
+        } catch {
+          setConfiguredEndpointCount(0);
+        }
       }
 
       if (cyclesResponse.ok) {
