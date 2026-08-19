@@ -2,6 +2,7 @@ import { Activity, Mail, Lock, ArrowRight, Copy, Github, CheckCircle2, Shield, S
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { buildApiUrl } from '../api';
+import { clearAllCache } from '../lib/apiCache';
 
 const TESTING_REPO_URL = 'https://github.com/ranathungaWK/Automated-Testing-Environment-';
 
@@ -108,6 +109,8 @@ export function LoginPage() {
         );
       }
 
+      // Clear any cached data from a previous session before navigating
+      clearAllCache();
       navigate('/dashboard');
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {

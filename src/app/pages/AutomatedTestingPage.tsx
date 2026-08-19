@@ -14,6 +14,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { buildApiUrl } from '@/app/api';
+import { cachedFetch } from '../lib/apiCache';
 
 type RunPhase = 'idle' | 'queued' | 'running' | 'completed' | 'failed';
 
@@ -153,7 +154,7 @@ export function AutomatedTestingPage() {
   useEffect(() => {
     const fetchScripts = async () => {
       try {
-        const response = await fetch(buildApiUrl(`/api/v1/k6/applications/${appId}/scripts`), {
+        const response = await cachedFetch(buildApiUrl(`/api/v1/k6/applications/${appId}/scripts`), {
           headers: {
             ...getAuthHeaders(),
           },

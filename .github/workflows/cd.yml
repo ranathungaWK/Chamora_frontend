@@ -1,0 +1,95 @@
+name: Frontend CD
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Build Production Bundle
+  # ──────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: dist/
+          retention-days: 14
+
+  # ──────────────────────────────────────────────
+  # 2. Deploy to VPS via SSH
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to VPS
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist-${{ github.sha }}
+          path: dist/
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy frontend to server
+        run: |
+          # Create a temporary deploy directory on the server
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "mkdir -p ${{ secrets.DEPLOY_PATH }}/frontend_new"
+
+          # Upload the build output
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
+            dist/* \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/frontend_new/
+
+          # Atomic swap: rename old dir, move new into place, cleanup
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'DEPLOY_SCRIPT'
+          set -e
+          DEPLOY_DIR="${{ secrets.DEPLOY_PATH }}"
+
+          echo "🔄 Swapping frontend directories..."
+          if [ -d "$DEPLOY_DIR/frontend" ]; then
+            mv "$DEPLOY_DIR/frontend" "$DEPLOY_DIR/frontend_old"
+          fi
+          mv "$DEPLOY_DIR/frontend_new" "$DEPLOY_DIR/frontend"
+          rm -rf "$DEPLOY_DIR/frontend_old"
+
+          echo "✅ Frontend deployment complete!"
+          ls -la "$DEPLOY_DIR/frontend/"
+          DEPLOY_SCRIPT
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

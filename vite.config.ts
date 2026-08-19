@@ -18,8 +18,8 @@ function figmaAssetResolver() {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://localhost:8000'
-  const compareServiceTarget = env.VITE_COMPARE_SERVICE_URL || 'http://localhost:8030'
+  const proxyTarget = env.VITE_PROXY_TARGET || env.VITE_API_BASE_URL || 'http://13.49.183.64:8000'
+  const compareServiceTarget = env.VITE_COMPARE_SERVICE_URL || 'http://13.49.183.64:8030'
 
   return {
     plugins: [

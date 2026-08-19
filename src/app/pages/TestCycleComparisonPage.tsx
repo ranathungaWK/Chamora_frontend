@@ -22,6 +22,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/app/components/ui/button';
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { buildApiUrl } from '@/app/api';
+import { cachedFetch } from '../lib/apiCache';
 import {
   type Endpoint,
   type MetricEntry,
@@ -117,12 +118,12 @@ export function TestCycleComparisonPage() {
       const [cyclesData, endpointsData, appsRes, dashRes] = await Promise.all([
         fetchCycles(applicationId),
         fetchEndpoints(applicationId),
-        fetch(buildApiUrl('/api/v1/application/me'), {
+        cachedFetch(buildApiUrl('/api/v1/application/me'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }).catch(() => null),
-        fetch(buildApiUrl(`/api/v1/dashboard/${applicationId}`), {
+        cachedFetch(buildApiUrl(`/api/v1/dashboard/${applicationId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

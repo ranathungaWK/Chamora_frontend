@@ -2,6 +2,7 @@ import { Activity, LogOut, Plus, Server, TestTube, FolderOpen, TrendingUp, Clock
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../api';
+import { cachedFetch, clearAllCache } from '../lib/apiCache';
 
 interface UserApplication {
   id: number;
@@ -43,7 +44,7 @@ export function UserDashboard() {
       setAppsError('');
       setIsLoadingApps(true);
       try {
-        const response = await fetch(buildApiUrl('/api/v1/application/me'), {
+        const response = await cachedFetch(buildApiUrl('/api/v1/application/me'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -73,9 +74,9 @@ export function UserDashboard() {
         data.forEach(async (app) => {
           // Health check
           try {
-            const healthRes = await fetch(buildApiUrl(`/api/v1/application/${app.id}/health-check`), {
+            const healthRes = await cachedFetch(buildApiUrl(`/api/v1/application/${app.id}/health-check`), {
               headers: { Authorization: `Bearer ${token}` }
-            });
+            }, 30_000);
             const healthData = await healthRes.json();
             setAppHealthStatuses(prev => ({ ...prev, [app.id]: healthData.status }));
           } catch (error) {
@@ -84,7 +85,7 @@ export function UserDashboard() {
 
           // Monitoring status check
           try {
-            const monitoringRes = await fetch(buildApiUrl(`/api/v1/application/${app.id}/monitoring-status`), {
+            const monitoringRes = await cachedFetch(buildApiUrl(`/api/v1/application/${app.id}/monitoring-status`), {
               headers: { Authorization: `Bearer ${token}` }
             });
             const monitoringData = await monitoringRes.json();
@@ -98,7 +99,7 @@ export function UserDashboard() {
 
           // Fetch test cycles count
           try {
-            const cyclesRes = await fetch(buildApiUrl(`/api/v1/test-cycles?application_id=${app.id}`), {
+            const cyclesRes = await cachedFetch(buildApiUrl(`/api/v1/test-cycles?application_id=${app.id}`), {
               headers: { Authorization: `Bearer ${token}` }
             });
             if (cyclesRes.ok) {
@@ -123,6 +124,7 @@ export function UserDashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
+    clearAllCache();
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
     navigate('/login');

@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2, Filter, RefreshCw, ShieldAlert, Trash2, X, Loa
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { buildApiUrl, buildRcaApiUrl } from '@/app/api';
+import { cachedFetch, invalidateCache } from '../lib/apiCache';
 
 interface AnomalyItem {
   id: string;
@@ -217,9 +218,9 @@ export function AnomalyFlagsPage() {
       if (dateFrom) params.set('date_from', toIsoDayStart(shiftDateInput(dateFrom, -1)));
       if (dateTo) params.set('date_to', toIsoDayEnd(shiftDateInput(dateTo, 1)));
 
-      const listResponse = await fetch(buildApiUrl(`/api/v1/anomaly-flags/application/${appId}?${params.toString()}`), {
+      const listResponse = await cachedFetch(buildApiUrl(`/api/v1/anomaly-flags/application/${appId}?${params.toString()}`), {
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }, 30_000);
 
       if (listResponse.status === 404) {
         setAnomalies([]);
@@ -252,7 +253,7 @@ export function AnomalyFlagsPage() {
 
     setLoadingTests(true);
     try {
-      const scriptsResponse = await fetch(buildApiUrl(`/api/v1/k6/applications/${appId}/scripts`), {
+      const scriptsResponse = await cachedFetch(buildApiUrl(`/api/v1/k6/applications/${appId}/scripts`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!scriptsResponse.ok) return;
@@ -261,7 +262,7 @@ export function AnomalyFlagsPage() {
       const allRuns: TestRun[] = [];
       await Promise.all(
         scripts.map(async (script) => {
-          const historyResponse = await fetch(buildApiUrl(`/api/v1/k6/scripts/${script.id}/history`), {
+          const historyResponse = await cachedFetch(buildApiUrl(`/api/v1/k6/scripts/${script.id}/history`), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (historyResponse.ok) {
@@ -293,6 +294,8 @@ export function AnomalyFlagsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to acknowledge anomaly');
+      // Invalidate flags cache so back-navigation sees updated list
+      invalidateCache(`/api/v1/anomaly-flags/application/${appId}`);
       await loadFlags();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -372,6 +375,8 @@ export function AnomalyFlagsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to acknowledge anomalies');
+      // Invalidate flags cache so back-navigation sees updated list
+      invalidateCache(`/api/v1/anomaly-flags/application/${appId}`);
       await loadFlags();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

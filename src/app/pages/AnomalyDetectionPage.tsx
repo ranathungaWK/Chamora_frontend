@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { buildApiUrl } from '../api';
+import { cachedFetch, invalidateCache } from '../lib/apiCache';
 
 const ML_TRAINING_COOLDOWN_MS = 2 * 24 * 60 * 60 * 1000;
 
@@ -149,7 +150,7 @@ export function AnomalyDetectionPage() {
       setConfigMessage('');
       setConfigMessageType('info');
       try {
-        const response = await fetch(buildApiUrl('/api/v1/application/me'), {
+        const response = await cachedFetch(buildApiUrl('/api/v1/application/me'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -199,7 +200,7 @@ export function AnomalyDetectionPage() {
       setConfigMessage('');
       setConfigMessageType('info');
       try {
-        const response = await fetch(buildApiUrl(`/api/v1/anomaly-configs/endpoint/${selectedEndpointId}`), {
+        const response = await cachedFetch(buildApiUrl(`/api/v1/anomaly-configs/endpoint/${selectedEndpointId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -252,7 +253,7 @@ export function AnomalyDetectionPage() {
       setIsLoadingSummaries(true);
       setSummaryError('');
       try {
-        const response = await fetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
+        const response = await cachedFetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -329,6 +330,10 @@ export function AnomalyDetectionPage() {
       setConfigMessage('Rule-based configuration saved successfully.');
       setConfigMessageType('success');
       toast.success('Configuration saved successfully');
+
+      // Invalidate cached reads so back-navigation gets fresh data
+      invalidateCache(`/api/v1/anomaly-configs/application/${appId}/summary`);
+      invalidateCache(`/api/v1/anomaly-configs/endpoint/${selectedEndpointId}`);
 
       const refreshResponse = await fetch(buildApiUrl(`/api/v1/anomaly-configs/application/${appId}/summary`), {
         headers: {
@@ -631,7 +636,7 @@ export function AnomalyDetectionPage() {
                     </div>
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        summary.is_active ? 'bg-blue-200 text-blue-900' : 'bg-slate-200 text-slate-700'
+                        summary.is_active ? 'bg-blue-200 text-blue-900' : 'bg-red-100 text-red-700'
                       }`}
                     >
                       {summary.is_active ? 'Active' : 'Disabled'}
@@ -688,6 +693,8 @@ export function AnomalyDetectionPage() {
                           });
                           if (!res.ok) throw new Error('Failed to toggle ML need');
                           const updated = await res.json();
+                          // Invalidate summary cache so back-navigation sees updated ML state
+                          invalidateCache(`/api/v1/anomaly-configs/application/${appId}/summary`);
                           // update local state
                           setConfigSummaries((prev) => prev.map((s) => (s.config_id === updated.id ? { ...s, ml_inference_need: updated.ml_inference_need } : s)));
                           toast.success(updated.ml_inference_need ? 'ML Training scheduled' : 'ML Training disabled');

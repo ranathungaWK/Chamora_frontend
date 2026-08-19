@@ -27,6 +27,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { buildApiUrl } from '../api';
+import { cachedFetch, invalidateCache } from '../lib/apiCache';
 import {
   ApplicationDetails,
   ApplicationEndpoint,
@@ -126,7 +127,7 @@ export function ApplicationDashboard() {
     setDocumentsError('');
 
     try {
-      const response = await fetch(buildApiUrl(`/api/v1/documents/${appId}`), {
+      const response = await cachedFetch(buildApiUrl(`/api/v1/documents/${appId}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -170,6 +171,8 @@ export function ApplicationDashboard() {
         throw new Error(error.detail ?? 'Failed to delete document');
       }
 
+      // Invalidate documents cache so back-navigation sees updated list
+      invalidateCache(`/api/v1/documents/${appId}`);
       await loadDocuments();
     } catch (error) {
       setDocumentsError(error instanceof Error ? error.message : 'Failed to delete document');
@@ -201,7 +204,7 @@ export function ApplicationDashboard() {
             Authorization: `Bearer ${token}`,
           },
         }),
-        fetch(buildApiUrl(`/api/v1/test-cycles?application_id=${appId}`), {
+        cachedFetch(buildApiUrl(`/api/v1/test-cycles?application_id=${appId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -214,7 +217,7 @@ export function ApplicationDashboard() {
         setTargetsList(appDetailsRes.endpoints || []);
       } else {
         // Fallback to /application/me
-        const appsResponse = await fetch(buildApiUrl('/api/v1/application/me'), {
+        const appsResponse = await cachedFetch(buildApiUrl('/api/v1/application/me'), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (appsResponse.ok) {
@@ -254,9 +257,9 @@ export function ApplicationDashboard() {
     }
 
     try {
-      const healthRes = await fetch(buildApiUrl(`/api/v1/application/${appId}/health-check`), {
+      const healthRes = await cachedFetch(buildApiUrl(`/api/v1/application/${appId}/health-check`), {
         headers: { Authorization: `Bearer ${token}` }
-      });
+      }, 30_000);
       const healthData = await healthRes.json();
       setAppHealthStatus(healthData.status);
     } catch {
@@ -361,6 +364,8 @@ export function ApplicationDashboard() {
       if (token) {
         setAppHealthStatus('loading');
         try {
+          // Invalidate health cache so fresh check is performed
+          invalidateCache(`/api/v1/application/${appId}/health-check`);
           const healthRes = await fetch(buildApiUrl(`/api/v1/application/${appId}/health-check`), {
             headers: { Authorization: `Bearer ${token}` }
           });

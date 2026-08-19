@@ -17,6 +17,7 @@ import {
   Lightbulb, Wrench, ChevronRight,
 } from "lucide-react";
 import { buildApiUrl } from "../api";
+import { cachedFetch } from "../lib/apiCache";
 
 // ── Detected anomalies (Anomaly Flags) endpoint ─────────────────────────────
 const ANOMALIES_ENDPOINT = (appId: string) =>
@@ -529,10 +530,10 @@ export function ReportPage() {
     if (!appId) return;
     const token = localStorage.getItem("access_token") || localStorage.getItem("token") || "";
     Promise.all([
-      fetch(buildApiUrl("/api/v1/application/me"), {
+      cachedFetch(buildApiUrl("/api/v1/application/me"), {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
+      cachedFetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]).then(([apps, dash]) => {

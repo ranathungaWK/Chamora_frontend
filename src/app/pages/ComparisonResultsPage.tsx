@@ -17,6 +17,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { buildApiUrl } from '@/app/api';
+import { cachedFetch } from '../lib/apiCache';
 
 import {
   type CompareResult,
@@ -351,10 +352,10 @@ export function ComparisonResultsPage() {
     if (!appId) return;
     const token = localStorage.getItem('access_token') || localStorage.getItem('token') || '';
     Promise.all([
-      fetch(buildApiUrl('/api/v1/application/me'), {
+      cachedFetch(buildApiUrl('/api/v1/application/me'), {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
+      cachedFetch(buildApiUrl(`/api/v1/dashboard/${appId}`), {
         headers: { Authorization: `Bearer ${token}` },
       }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]).then(([apps, dash]) => {
