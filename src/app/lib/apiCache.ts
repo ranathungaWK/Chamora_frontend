@@ -59,9 +59,16 @@ export async function cachedFetch(
   const response = await fetch(url, options);
 
   if (response.ok) {
-    const cloned = response.clone();
-    const data = await cloned.json();
-    cache.set(cacheKey, { data, expiresAt: now + ttlMs });
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const cloned = response.clone();
+        const data = await cloned.json();
+        cache.set(cacheKey, { data, expiresAt: now + ttlMs });
+      } catch {
+        // Ignore json parse error on cache write
+      }
+    }
   }
 
   return response;

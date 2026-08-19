@@ -27,17 +27,23 @@ function getAuthHeaders(): HeadersInit {
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
   if (!res.ok) {
-    let errorDetail = 'Request failed';
-    try {
-      const body = await res.json();
-      errorDetail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
-    } catch {
-      // ignore json parse error
+    let errorDetail = `Request failed (${res.status})`;
+    if (contentType.includes('application/json')) {
+      try {
+        const body = await res.json();
+        errorDetail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
+      } catch {
+        // ignore json parse error
+      }
     }
     throw new Error(errorDetail);
   }
-  return (await res.json()) as T;
+  if (contentType.includes('application/json')) {
+    return (await res.json()) as T;
+  }
+  throw new Error(`Unexpected non-JSON response from server (${res.status})`);
 }
 
 export async function fetchApplicationDetails(appId: string): Promise<ApplicationDetails> {

@@ -1,23 +1,23 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "http://13.49.183.64:8000/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "http://13.49.183.64:8000/api/$1"
     },
     {
-      "source": "/retriever/:path*",
-      "destination": "http://13.49.183.64:8000/retriever/:path*"
+      "source": "/retriever/(.*)",
+      "destination": "http://13.49.183.64:8000/retriever/$1"
     },
     {
-      "source": "/compare-service/:path*",
-      "destination": "http://13.49.183.64:8030/:path*"
+      "source": "/compare-service/(.*)",
+      "destination": "http://13.49.183.64:8030/$1"
     },
     {
-      "source": "/recommendation-service/:path*",
-      "destination": "http://13.49.183.64:8010/:path*"
+      "source": "/recommendation-service/(.*)",
+      "destination": "http://13.49.183.64:8010/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|retriever|compare-service|recommendation-service).*)",
       "destination": "/index.html"
     }
   ]

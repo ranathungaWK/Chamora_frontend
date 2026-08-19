@@ -199,16 +199,16 @@ export function ApplicationDashboard() {
     try {
       const [appDetailsRes, configsResponse, cyclesResponse] = await Promise.all([
         fetchApplicationDetails(appId).catch(() => null),
-        fetch(buildApiUrl('/api/v1/anomaly-configs/'), {
+        fetch(buildApiUrl('/api/v1/anomaly-configs'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }),
+        }).catch(() => null),
         cachedFetch(buildApiUrl(`/api/v1/test-cycles?application_id=${appId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }),
+        }).catch(() => null),
       ]);
 
       if (appDetailsRes) {
@@ -219,24 +219,32 @@ export function ApplicationDashboard() {
         // Fallback to /application/me
         const appsResponse = await cachedFetch(buildApiUrl('/api/v1/application/me'), {
           headers: { Authorization: `Bearer ${token}` },
-        });
-        if (appsResponse.ok) {
-          const applications = (await appsResponse.json()) as UserApplication[];
-          const currentApp = applications.find((app) => String(app.id) === String(appId));
-          if (currentApp) {
-            setAppName(currentApp.name);
+        }).catch(() => null);
+        if (appsResponse && appsResponse.ok) {
+          const appsContentType = appsResponse.headers.get('content-type') || '';
+          if (appsContentType.includes('application/json')) {
+            const applications = (await appsResponse.json()) as UserApplication[];
+            const currentApp = applications.find((app) => String(app.id) === String(appId));
+            if (currentApp) {
+              setAppName(currentApp.name);
+            }
           }
         }
       }
 
-      if (!configsResponse.ok) {
-        throw new Error('Failed to load anomaly configurations');
+      if (configsResponse && configsResponse.ok) {
+        const configsContentType = configsResponse.headers.get('content-type') || '';
+        if (configsContentType.includes('application/json')) {
+          const allConfigs = (await configsResponse.json()) as AnomalyConfig[];
+          const endpointIds = new Set((appDetailsRes?.endpoints ?? []).map((endpoint) => endpoint.id));
+          const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
+          setConfiguredEndpointCount(appConfigCount);
+        } else {
+          setConfiguredEndpointCount(0);
+        }
+      } else {
+        setConfiguredEndpointCount(0);
       }
-
-      const allConfigs = (await configsResponse.json()) as AnomalyConfig[];
-      const endpointIds = new Set((appDetailsRes?.endpoints ?? []).map((endpoint) => endpoint.id));
-      const appConfigCount = allConfigs.filter((config) => endpointIds.has(config.endpoint_id)).length;
-      setConfiguredEndpointCount(appConfigCount);
 
       if (cyclesResponse.ok) {
         const cyclesList = (await cyclesResponse.json()) as Array<{ status: string }>;
