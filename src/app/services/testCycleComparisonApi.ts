@@ -134,6 +134,10 @@ export interface CompareResult {
   no_threshold_count: number;
   missing_metric_keys: string[];
   summary?: CompareSummary;
+  /** Row id in `comparison_results`. Null when the save failed. */
+  comparison_id?: number | null;
+  saved?: boolean;
+  save_error?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -195,4 +199,120 @@ export async function runComparison(req: CompareRequest): Promise<CompareResult>
   });
   await checkResponse(res);
   return res.json() as Promise<CompareResult>;
+}
+
+// ---------------------------------------------------------------------------
+// Comparison history (`comparison_results` table)
+// ---------------------------------------------------------------------------
+
+/** One flattened metric-breakdown row, as rendered on the results page. */
+export interface SavedMetricRow {
+  metric_key: string;
+  endpoint_id: string | null;
+  label: string;
+  category: string | null;
+  aggregation: string | null;
+  unit: string | null;
+  higher_is_worse: boolean | null;
+  rank: number | null;
+  significance: number | null;
+  comparable: boolean | null;
+  status: string | null;
+  values: Array<{
+    cycle_id: number;
+    cycle_label: string;
+    value: number | null;
+    is_baseline: boolean;
+    pct_change: number | null;
+    diff: number | null;
+    classification: string | null;
+  }>;
+  threshold_check: ThresholdCheck | null;
+  cross_cycle_stats: CrossCycleStats | null;
+}
+
+/** The page-render payload stored alongside the raw report. */
+export interface SavedDisplay {
+  app_name: string | null;
+  application_id: number;
+  mode: 'baseline' | 'threshold';
+  cycles: Array<{
+    cycle_id: number;
+    label: string;
+    role: 'baseline' | 'target';
+    test_script_id: number | null;
+    status: string | null;
+    start_time: string | null;
+    end_time: string | null;
+    duration_seconds: number | null;
+  }>;
+  metrics: MetricEntry[];
+  rows: SavedMetricRow[];
+}
+
+/** A history row — the listing endpoint omits `report` and `display`. */
+export interface SavedComparisonSummary {
+  id: number;
+  application_id: number;
+  user_id: number | null;
+  mode: 'baseline' | 'threshold';
+  cycle_ids: number[];
+  baseline_cycle_id: number | null;
+  endpoint_ids: number[];
+  metric_keys: string[];
+  group_by_endpoint: boolean;
+  regression_threshold_pct: number | null;
+  thresholds_applied: boolean;
+  regression_count: number;
+  improvement_count: number;
+  unchanged_count: number;
+  violation_count: number;
+  ok_count: number;
+  no_threshold_count: number;
+  metric_count: number;
+  missing_metric_keys: string[];
+  summary_text: string | null;
+  summary_source: string | null;
+  summary_model: string | null;
+  top_metric_key: string | null;
+  top_metric_significance: number | null;
+  created_at: string;
+}
+
+/** A history row loaded in full. */
+export interface SavedComparison extends SavedComparisonSummary {
+  summary_error: string | null;
+  report: CompareResult;
+  display: SavedDisplay;
+}
+
+export async function fetchComparisonHistory(params: {
+  applicationId?: number;
+  userId?: number;
+  cycleId?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<SavedComparisonSummary[]> {
+  const query = new URLSearchParams();
+  if (params.applicationId !== undefined) query.set('application_id', String(params.applicationId));
+  if (params.userId !== undefined) query.set('user_id', String(params.userId));
+  if (params.cycleId !== undefined) query.set('cycle_id', String(params.cycleId));
+  if (params.limit !== undefined) query.set('limit', String(params.limit));
+  if (params.offset !== undefined) query.set('offset', String(params.offset));
+
+  const res = await fetch(`${COMPARE_BASE}/comparison-results?${query.toString()}`);
+  await checkResponse(res);
+  const data = await res.json() as { results: SavedComparisonSummary[] };
+  return data.results;
+}
+
+export async function fetchSavedComparison(id: number): Promise<SavedComparison> {
+  const res = await fetch(`${COMPARE_BASE}/comparison-results/${id}`);
+  await checkResponse(res);
+  return res.json() as Promise<SavedComparison>;
+}
+
+export async function deleteSavedComparison(id: number): Promise<void> {
+  const res = await fetch(`${COMPARE_BASE}/comparison-results/${id}`, { method: 'DELETE' });
+  await checkResponse(res);
 }
